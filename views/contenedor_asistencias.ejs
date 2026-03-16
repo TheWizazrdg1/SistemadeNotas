@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toma de Asistencia</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    
+    <style>
+        nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .table-container { max-height: 65vh; overflow: auto; border-radius: 8px; }
+        thead th { position: sticky; top: 0; z-index: 10; background: #fff; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); }
+        
+        /* Colores para los Radio Buttons de Materialize */
+        [type="radio"]:checked + span.presente-text { color: #2e7d32; font-weight: bold; }
+        [type="radio"]:checked + span.ausente-text { color: #c62828; font-weight: bold; }
+        [type="radio"]:checked + span.atrasado-text { color: #f57f17; font-weight: bold; }
+    </style>
+</head>
+<body class="grey lighten-4">
+
+    <nav>
+        <div class="nav-wrapper container">
+            <a href="/" class="brand-logo left hide-on-small-only" style="font-size: 1.5rem;">
+                <i class="material-icons left">fact_check</i>Asistencias
+            </a>
+            <ul id="nav-mobile" class="right">
+                <li><a href="/inicio"><i class="material-icons left">dashboard</i>Inicio</a></li>
+                <li><a href="/notas"><i class="material-icons left">assessment</i>Notas</a></li>
+                <li><a href="/logout" class="red darken-3 waves-effect waves-light btn"><i class="material-icons left">exit_to_app</i>Salir</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 20px; width: 95%; max-width: 1000px;">
+        
+        <div class="row" style="margin-bottom: 0;">
+                <div class="input-field col s12 m2">
+                    <i class="material-icons prefix">event</i>
+                    <input id="fecha_asistencia" type="date" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                    <label for="fecha_asistencia" class="active">Fecha</label>
+                </div>
+
+                <div class="input-field col s12 m2">
+                    <i class="material-icons prefix">access_time</i>
+                    <input id="hora_asistencia" type="time" required>
+                    <label for="hora_asistencia" class="active">Hora</label>
+                </div>
+
+                <div class="input-field col s12 m4">
+                    <i class="material-icons prefix">class</i>
+                    <select id="curso_asistencia">
+                        <option value="" disabled selected>Selecciona un curso...</option>
+                        <% cursos.forEach(c => { %>
+                            <option value="<%= c.id_curso %>"><%= c.grado %>° <%= c.nombre_curso %></option>
+                        <% }) %>
+                    </select>
+                    <label>Curso</label>
+                </div>
+
+                <div class="input-field col s12 m4">
+                    <i class="material-icons prefix">menu_book</i>
+                    <select id="asignatura_asistencia">
+                        <option value="" disabled selected>Esperando curso...</option>
+                    </select>
+                    <label>Asignatura</label>
+                </div>
+            </div>
+
+        <div id="panelLista" class="card table-container" style="display: none;">
+            <form id="formAsistencia">
+                <table class="highlight striped responsive-table">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Apellidos y Nombres</th>
+                            <th class="center-align">🟢 Presente</th>
+                            <th class="center-align">🔴 Ausente</th>
+                            <th class="center-align">🟡 Atrasado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaBodyAlumnos">
+                        </tbody>
+                </table>
+                
+                    <div class="card-action right-align" style="background-color: #f8f9fa;">
+    <button type="button" id="btnVerHistorial" class="btn waves-effect waves-light purple darken-1" style="border-radius: 20px; padding: 0 30px; margin-right: 15px;">
+        <i class="material-icons left">history</i>Ver Historial
+    </button>
+
+    <button type="button" id="btnExportarExcel" class="btn waves-effect waves-light blue darken-1" style="border-radius: 20px; padding: 0 30px; margin-right: 15px;">
+        <i class="material-icons left">table_view</i>Descargar Excel
+    </button>
+    
+    <button type="button" id="btnGuardarLista" class="btn waves-effect waves-light green darken-1" style="border-radius: 20px; padding: 0 30px;">
+        <i class="material-icons left">save</i>Guardar Asistencia
+    </button>
+</div>
+            </form>
+        </div>
+
+        <div id="loader" class="center-align" style="display: none; padding: 40px;">
+            <div class="preloader-wrapper big active">
+                <div class="spinner-layer spinner-blue-only">
+                    <div class="circle-clipper left"><div class="circle"></div></div>
+                    <div class="gap-patch"><div class="circle"></div></div>
+                    <div class="circle-clipper right"><div class="circle"></div></div>
+                </div>
+            </div>
+            <p class="grey-text">Cargando lista del curso...</p>
+        </div>
+
+    </div>
+    <div id="modalHistorial" class="modal bottom-sheet" style="max-height: 80vh;">
+        <div class="modal-content">
+            <h4><i class="material-icons left" style="font-size: 2rem; color: #764ba2;">history</i> Historial de Asistencias</h4>
+            <p class="grey-text" id="textoHistorialCurso">Selecciona un curso primero.</p>
+            
+            <table class="highlight striped">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>RUT</th>
+                        <th>Alumno</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaBodyHistorial">
+                    </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cerrar Historial</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        M.AutoInit();
+        
+        // Autocompletar con la hora actual
+        const now = new Date();
+        const horaActual = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        document.getElementById('hora_asistencia').value = horaActual;
+    });
+
+    const selectCurso = document.getElementById('curso_asistencia');
+    const inputFecha = document.getElementById('fecha_asistencia');
+    const panelLista = document.getElementById('panelLista');
+    const tablaBody = document.getElementById('tablaBodyAlumnos');
+    const loader = document.getElementById('loader');
+    const selectAsignatura = document.getElementById('asignatura_asistencia'); 
+
+    // ==========================================
+    // 1. CARGAR ASIGNATURAS (Se ejecuta solo al cambiar de Curso)
+    // ==========================================
+    selectCurso.addEventListener('change', async function() {
+        const idCurso = selectCurso.value;
+        if (!idCurso) return;
+
+        // Ocultamos la tabla hasta que el profe elija una asignatura
+        panelLista.style.display = 'none';
+        selectAsignatura.innerHTML = '<option value="" disabled selected>Cargando asignaturas...</option>';
+        M.FormSelect.init(selectAsignatura);
+
+        try {
+            const respuesta = await fetch(`/api/asignaturas_curso/${idCurso}`);
+            const asignaturas = await respuesta.json();
+
+            selectAsignatura.innerHTML = '<option value="" disabled selected>Selecciona la asignatura...</option>';
+            
+            if (asignaturas.length > 0) {
+                asignaturas.forEach(asig => {
+                    selectAsignatura.innerHTML += `<option value="${asig.id_asignatura}">${asig.nombre_asignatura}</option>`;
+                });
+            } else {
+                selectAsignatura.innerHTML = '<option value="" disabled selected>Este curso no tiene asignaturas</option>';
+            }
+            
+            M.FormSelect.init(selectAsignatura);
+        } catch (error) {
+            console.error("Error al cargar asignaturas:", error);
+            M.toast({html: 'Error al cargar las asignaturas del curso', classes: 'red rounded'});
+        }
+    });
+
+    // ==========================================
+    // 2. CARGAR ALUMNOS Y SUS ESTADOS (Se ejecuta al cambiar Asignatura o Fecha)
+    // ==========================================
+    async function cargarListaAlumnos() {
+        const idCurso = selectCurso.value;
+        const fecha = inputFecha.value;
+        const idAsignatura = selectAsignatura.value;
+
+        // Validamos: No mostramos alumnos hasta que haya Curso, Fecha Y Asignatura
+        if (!idCurso || !fecha || !idAsignatura) {
+            panelLista.style.display = 'none';
+            return;
+        }
+
+        panelLista.style.display = 'none';
+        loader.style.display = 'block';
+
+        try {
+            // OJO: Fíjate que ahora la ruta asistencia_fecha incluye el id_asignatura
+            const [resAlumnos, resAsistencia] = await Promise.all([
+                fetch(`/api/alumnos_curso/${idCurso}`),
+                fetch(`/api/asistencia_fecha/${idCurso}/${fecha}/${idAsignatura}`)
+            ]);
+
+            const alumnos = await resAlumnos.json();
+            const asistenciasGuardadas = await resAsistencia.json();
+
+            // Diccionario de asistencia previa (ej: {"1": "Presente", "2": "Atrasado"})
+            const mapaAsistencia = {};
+            asistenciasGuardadas.forEach(ast => {
+                mapaAsistencia[ast.id_alumno] = ast.estado;
+            });
+
+            tablaBody.innerHTML = ''; 
+
+            if (alumnos.length === 0) {
+                tablaBody.innerHTML = `<tr><td colspan="5" class="center-align grey-text">Este curso no tiene alumnos registrados.</td></tr>`;
+            } else {
+                alumnos.forEach((alumno, index) => {
+                    // Si no tiene asistencia guardada, por defecto es 'Presente'
+                    const estadoActual = mapaAsistencia[alumno.id_alumno] || 'Presente';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td style="font-weight: 500;">${alumno.apellido}, ${alumno.nombre}</td>
+                        <td class="center-align">
+                            <label>
+                                <input name="estado_${alumno.id_alumno}" class="with-gap" type="radio" value="Presente" ${estadoActual === 'Presente' ? 'checked' : ''} />
+                                <span class="presente-text">P</span>
+                            </label>
+                        </td>
+                        <td class="center-align">
+                            <label>
+                                <input name="estado_${alumno.id_alumno}" class="with-gap" type="radio" value="Ausente" ${estadoActual === 'Ausente' ? 'checked' : ''} />
+                                <span class="ausente-text">A</span>
+                            </label>
+                        </td>
+                        <td class="center-align">
+                            <label>
+                                <input name="estado_${alumno.id_alumno}" class="with-gap" type="radio" value="Atrasado" ${estadoActual === 'Atrasado' ? 'checked' : ''} />
+                                <span class="atrasado-text">T</span>
+                            </label>
+                        </td>
+                    `;
+                    tablaBody.appendChild(tr);
+                });
+            }
+
+            loader.style.display = 'none';
+            panelLista.style.display = 'block';
+
+        } catch (error) {
+            console.error("Error cargando lista", error);
+            M.toast({html: 'Error al cargar los alumnos y su asistencia', classes: 'red rounded'});
+            loader.style.display = 'none';
+        }
+    }
+
+    // Escuchadores de eventos para recargar la tabla de alumnos
+    selectAsignatura.addEventListener('change', cargarListaAlumnos);
+    inputFecha.addEventListener('change', cargarListaAlumnos);
+
+
+    // ==========================================
+    // 3. GUARDAR LA ASISTENCIA (Con Asignatura)
+    // ==========================================
+    document.getElementById('btnGuardarLista').addEventListener('click', async function() {
+        const idCurso = document.getElementById('curso_asistencia').value;
+        const idAsignatura = document.getElementById('asignatura_asistencia').value;
+        const fecha = document.getElementById('fecha_asistencia').value;
+        const hora = document.getElementById('hora_asistencia').value; 
+        
+        // Validación estricta
+        if (!idCurso || !idAsignatura || !fecha || !hora) {
+            return M.toast({html: 'Falta seleccionar curso, asignatura, fecha u hora', classes: 'red rounded'});
+        }
+
+        const asistencias = {};
+        const radios = document.querySelectorAll('input[type="radio"]:checked');
+        
+        radios.forEach(radio => {
+            const idAlumno = radio.name.split('_')[1];
+            asistencias[idAlumno] = radio.value;
+        });
+
+        try {
+            const response = await fetch('/guardar_asistencias', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    curso_id: idCurso,
+                    asignatura_id: idAsignatura, // <-- ENVIAMOS ASIGNATURA AL BACKEND
+                    fecha: fecha,
+                    hora: hora,
+                    asistencias: asistencias
+                })
+            });
+
+            const resultado = await response.json();
+            
+            if (resultado.success) {
+                M.toast({html: resultado.mensaje, classes: 'green rounded'});
+            } else {
+                M.toast({html: resultado.mensaje, classes: 'red rounded'});
+            }
+        } catch (error) {
+            console.error("Error al guardar", error);
+            M.toast({html: 'Hubo un problema de conexión al guardar', classes: 'red rounded'});
+        }
+    });
+
+
+    // ==========================================
+    // 4. VER HISTORIAL DE ASISTENCIA
+    // ==========================================
+    document.getElementById('btnVerHistorial').addEventListener('click', async function() {
+        const selectCurso = document.getElementById('curso_asistencia');
+        const idCurso = selectCurso.value;
+
+        if (!idCurso) {
+            return M.toast({html: 'Selecciona un curso primero para ver su historial', classes: 'red rounded'});
+        }
+
+        const nombreCurso = selectCurso.options[selectCurso.selectedIndex].text;
+        document.getElementById('textoHistorialCurso').innerText = `Mostrando registros históricos de: ${nombreCurso}`;
+        
+        const tablaBodyHistorial = document.getElementById('tablaBodyHistorial');
+        tablaBodyHistorial.innerHTML = `<tr><td colspan="5" class="center-align">Cargando historial...</td></tr>`;
+
+        const modalInstance = M.Modal.getInstance(document.getElementById('modalHistorial'));
+        modalInstance.open();
+
+        try {
+            const respuesta = await fetch(`/api/historial_asistencia/${idCurso}`);
+            const historial = await respuesta.json();
+
+            tablaBodyHistorial.innerHTML = ''; 
+
+            if (historial.length === 0) {
+                tablaBodyHistorial.innerHTML = `<tr><td colspan="5" class="center-align grey-text">No hay registros de asistencia para este curso.</td></tr>`;
+                return;
+            }
+
+            historial.forEach(registro => {
+                const fechaBonita = new Date(registro.fecha).toLocaleDateString('es-CL', { timeZone: 'UTC' });
+                
+                let colorEstado = 'green-text'; 
+                if (registro.estado === 'Ausente') colorEstado = 'red-text';
+                if (registro.estado === 'Atrasado') colorEstado = 'orange-text';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: bold;">${fechaBonita}</td>
+                    <td>${registro.hora}</td>
+                    <td class="grey-text">${registro.rut}</td>
+                    <td>${registro.apellido}, ${registro.nombre}</td>
+                    <td class="${colorEstado} style="font-weight: bold;">${registro.estado}</td>
+                `;
+                tablaBodyHistorial.appendChild(tr);
+            });
+
+        } catch (error) {
+            console.error("Error al cargar historial:", error);
+            tablaBodyHistorial.innerHTML = `<tr><td colspan="5" class="center-align red-text">Error al cargar los datos.</td></tr>`;
+        }
+    });
+
+    // ==========================================
+    // 5. EXPORTAR HISTORIAL COMPLETO A EXCEL
+    // ==========================================
+    document.getElementById('btnExportarExcel').addEventListener('click', async function() {
+        const selectCurso = document.getElementById('curso_asistencia');
+        const idCurso = selectCurso.value;
+
+        if (!idCurso) {
+            return M.toast({html: 'Selecciona un curso primero para descargar su historial', classes: 'red rounded'});
+        }
+
+        const nombreCurso = selectCurso.options[selectCurso.selectedIndex].text;
+        M.toast({html: 'Generando Excel, por favor espera...', classes: 'blue rounded'});
+
+        try {
+            const respuesta = await fetch(`/api/historial_asistencia/${idCurso}`);
+            const historial = await respuesta.json();
+
+            if (historial.length === 0) {
+                return M.toast({html: 'No hay registros de asistencia para exportar de este curso', classes: 'orange rounded'});
+            }
+
+            const datosExcel = historial.map((registro, index) => {
+                const fechaBonita = new Date(registro.fecha).toLocaleDateString('es-CL', { timeZone: 'UTC' });
+                
+                return {
+                    "N°": index + 1,
+                    "Fecha": fechaBonita,
+                    "Hora": registro.hora,
+                    "RUT": registro.rut,
+                    "Alumno": `${registro.apellido}, ${registro.nombre}`,
+                    "Estado Asistencia": registro.estado
+                };
+            });
+
+            const hoja = XLSX.utils.json_to_sheet(datosExcel);
+            
+            hoja['!cols'] = [
+                { wch: 5 },  
+                { wch: 12 }, 
+                { wch: 10 }, 
+                { wch: 15 }, 
+                { wch: 40 }, 
+                { wch: 20 }  
+            ];
+
+            const libro = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(libro, hoja, "Historial_Asistencia");
+
+            const nombreArchivo = `Historial_Asistencia_${nombreCurso}.xlsx`.replace(/ /g, "_");
+            XLSX.writeFile(libro, nombreArchivo);
+
+            M.toast({html: 'Excel descargado exitosamente', classes: 'green rounded'});
+
+        } catch (error) {
+            console.error("Error al generar Excel:", error);
+            M.toast({html: 'Error al generar el archivo Excel', classes: 'red rounded'});
+        }
+    });
+</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>

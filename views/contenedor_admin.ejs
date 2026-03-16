@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Principal - Libro de Clases</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    
+    <style>
+        /* Mantenemos tu tema institucional */
+        nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        
+        /* Estilos personalizados para las tarjetas del menú */
+        .menu-card {
+            border-radius: 15px;
+            padding: 30px 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 100%;
+        }
+        
+        /* Efecto al pasar el mouse */
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.15) !important;
+        }
+
+        .menu-card .material-icons {
+            font-size: 4rem;
+            color: #667eea; /* Color del ícono */
+            margin-bottom: 15px;
+        }
+
+        .menu-card h5 {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .menu-card p {
+            color: #777;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Enlaces limpios sin subrayado */
+        .menu-link {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body class="grey lighten-4">
+
+    <nav>
+        <div class="nav-wrapper container">
+            <a href="#" class="brand-logo left" style="font-size: 1.5rem;">
+                <i class="material-icons left">school</i>Libro de Clases
+            </a>
+            <ul id="nav-mobile" class="right">
+                <li>
+                    <a href="/logout" class="red darken-3 waves-effect waves-light btn" style="border-radius: 20px;">
+                        <i class="material-icons left">exit_to_app</i>Cerrar Sesión
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 40px; margin-bottom: 40px;">
+        
+        <div class="row center-align" style="margin-bottom: 40px;">
+            <h3 style="color: #495057; font-weight: bold;">Bienvenido al Sistema</h3>
+            <p class="grey-text" style="font-size: 1.2rem;">Selecciona un módulo para comenzar a trabajar</p>
+        </div>
+
+        <div class="row">
+
+            <div class="col s12 m6 l4" style="margin-bottom: 20px;">
+                <a href="/notas" class="menu-link">
+                    <div class="card menu-card hoverable center-align z-depth-1">
+                        <i class="material-icons">border_color</i>
+                        <h5>Planilla de Notas</h5>
+                        <p>Ingresar y editar calificaciones</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col s12 m6 l4" style="margin-bottom: 20px;">
+                <a href="/calificaciones" class="menu-link">
+                    <div class="card menu-card hoverable center-align z-depth-1">
+                        <i class="material-icons">assessment</i>
+                        <h5>Reportes</h5>
+                        <p>Ver y descargar notas por alumno</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col s12 m6 l4" style="margin-bottom: 20px;">
+                <a href="/anotaciones" class="menu-link">
+                    <div class="card menu-card hoverable center-align z-depth-1">
+                        <i class="material-icons">assignment</i>
+                        <h5>Anotaciones</h5>
+                        <p>Libro de conducta estudiantil</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col s12 m6 l4" style="margin-bottom: 20px;">
+                <a href="/alumnos" class="menu-link">
+                    <div class="card menu-card hoverable center-align z-depth-1">
+                        <i class="material-icons">face</i>
+                        <h5>Alumnos</h5>
+                        <p>Gestionar matrícula y datos</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col s12 m6 l4" style="margin-bottom: 20px;">
+                <a href="/profesores" class="menu-link">
+                    <div class="card menu-card hoverable center-align z-depth-1">
+                        <i class="material-icons">assignment_ind</i>
+                        <h5>Profesores</h5>
+                        <p>Registro del cuerpo docente</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col s12 m6 l4" style="margin-bottom: 20px;">
+                <a href="/cursos" class="menu-link">
+                    <div class="card menu-card hoverable center-align z-depth-1">
+                        <i class="material-icons">class</i>
+                        <h5>Cursos</h5>
+                        <p>Crear y administrar niveles</p>
+                    </div>
+                </a>
+            </div>
+           <div class="col s12 m6 l4" style="margin-bottom: 20px;">
+                <a href="/asistencias" class="menu-link">
+                    <div class="card menu-card hoverable center-align z-depth-1">
+                        <i class="material-icons">menu_book</i>
+                        <h5>Asistencia</h5>
+                        <p>Asistencia</p>
+                    </div>
+                </a>
+            </div>
+             
+            <div class="col s12 m6 l4 " style="margin-bottom: 20px;">
+                <a href="/asignaturas" class="menu-link">
+                    <div class="card menu-card hoverable center-align z-depth-1">
+                        <i class="material-icons">menu_book</i>
+                        <h5>Asignaturas</h5>
+                        <p>Materias y mallas curriculares</p>
+                    </div>
+                </a>
+            </div>
+
+                
+
+
+        </div> </div> <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Cursos</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    
+    <style>
+        /* Tema morado institucional */
+        nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .modal h4 { color: #667eea; }
+        
+        /* Ajuste para Tabla */
+        .table-container {
+            max-height: 60vh;
+            overflow: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="grey lighten-4">
+
+    <nav>
+        <div class="nav-wrapper container">
+            <a href="#" class="brand-logo left hide-on-small-only" style="font-size: 1.5rem;">
+                <i class="material-icons left">class</i>Gestión de Cursos
+            </a>
+            <ul id="nav-mobile" class="right">
+                <li><a href="/contenedor_admin"><i class="material-icons left">people</i>Menu</a></li>
+                <li><a href="/alumnos"><i class="material-icons left">people</i>Alumnos</a></li>
+                <li><a href="/notas"><i class="material-icons left">assessment</i>Notas</a></li>
+                <li><a href="/logout" class="red darken-3 waves-effect waves-light btn"><i class="material-icons left">exit_to_app</i>Salir</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 20px; width: 95%; max-width: 1200px;">
+        
+        <div class="card-panel">
+            <h5 class="center-align" style="color: #495057; font-weight: 600;">➕ Registrar Nuevo Curso</h5>
+            <form action="/crear_curso" method="POST" class="row" style="margin-bottom: 0;">
+                
+                <div class="input-field col s12 m3">
+                    <i class="material-icons prefix">format_list_numbered</i>
+                    <input id="grado" name="grado" type="number" min="1" max="12" class="validate" required>
+                    <label for="grado">Grado (Ej: 1, 2, 3)</label>
+                </div>
+
+                <div class="input-field col s12 m3">
+                    <i class="material-icons prefix">font_download</i>
+                    <input id="nombre_curso" name="nombre_curso" type="text" maxlength="1" style="text-transform: uppercase;" class="validate" required>
+                    <label for="nombre_curso">Letra (Ej: A, B)</label>
+                </div>
+
+                <div class="input-field col s12 m3">
+                    <i class="material-icons prefix">date_range</i>
+                    <input id="anio" name="anio" type="number" min="2020" max="2100" class="validate" required>
+                    <label for="anio">Año (Ej: 2024)</label>
+                </div>
+
+                <div class="input-field col s12 m3 center-align">
+                    <button class="btn waves-effect waves-light green darken-1" type="submit" style="width: 100%; height: 45px;">
+                        Crear Curso
+                        <i class="material-icons right">add_circle</i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="row mb-0">
+            <div class="input-field col s12 m6 offset-m3">
+                <i class="material-icons prefix">search</i>
+                <input id="buscador_cursos" type="text" class="validate">
+                <label for="buscador_cursos">🔍 Buscar curso (Ej: 1 A)</label>
+            </div>
+        </div>
+
+        <div class="card table-container">
+            <table class="highlight centered striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Grado</th>
+                        <th>Letra</th>
+                        <th>Año</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (cursos && cursos.length > 0) { %>
+                        <% cursos.forEach(c => { %>
+                        <tr>
+                            <td>#<%= c.id_curso %></td>
+                            <td style="font-weight: bold; font-size: 1.1em;"><%= c.grado %>°</td>
+                            <td style="font-weight: bold; font-size: 1.1em;"><%= c.nombre_curso %></td>
+                            <td><%= c.anio %></td>
+                            <td>
+                                <a href="#modalEdicionCurso" 
+                                   class="btn-small amber darken-2 modal-trigger waves-effect waves-light" 
+                                   onclick="cargarCurso('<%= c.id_curso %>', '<%= c.grado %>', '<%= c.nombre_curso %>', '<%= c.anio %>')">
+                                   <i class="material-icons">edit</i>
+                                </a>
+                                <a href="/borrar_curso/<%= c.id_curso %>" 
+                                   class="btn-small red darken-2 waves-effect waves-light" 
+                                   onclick="return confirm('¿Seguro que deseas desactivar el curso <%= c.grado %>° <%= c.nombre_curso %>?');">
+                                   <i class="material-icons">delete</i>
+                                </a>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" class="grey-text center-align" style="padding: 20px;">
+                                No hay cursos registrados en el sistema.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div id="modalEdicionCurso" class="modal" style="max-width: 500px; border-radius: 8px;">
+        <form action="/editar_curso" method="POST">
+            <div class="modal-content">
+                <h4>✏️ Editar Curso</h4>
+                <div class="row" style="margin-top: 20px;">
+                    <input type="hidden" name="id_curso" id="id_curso_editar">
+
+                    <div class="input-field col s12 m6">
+                        <input id="grado_editar" name="grado" type="number" min="1" max="12" class="validate" required>
+                        <label for="grado_editar">Grado</label>
+                    </div>
+
+                    <div class="input-field col s12 m6">
+                        <input id="letra_editar" name="nombre_curso" type="text" maxlength="1" style="text-transform: uppercase;" class="validate" required>
+                        <label for="letra_editar">Letra</label>
+                    </div>
+
+                    <div class="input-field col s12">
+                        <input id="anio_editar" name="anio" type="number" min="2020" max="2100" class="validate" required>
+                        <label for="anio_editar">Año</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancelar</a>
+                <button type="submit" class="waves-effect waves-green btn blue darken-1">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar Materialize
+            M.AutoInit();
+        });
+
+        // Función para cargar los datos en el Modal
+        function cargarCurso(id, grado, letra, anio) {
+            document.getElementById('id_curso_editar').value = id;
+            document.getElementById('grado_editar').value = grado;
+            document.getElementById('letra_editar').value = letra;
+            document.getElementById('anio_editar').value = anio;
+
+            // Actualizar las etiquetas para que no se monten sobre el texto
+            M.updateTextFields();
+        }
+
+        // Script del Buscador en tiempo real
+        const inputBusqueda = document.getElementById('buscador_cursos');
+        if (inputBusqueda) {
+            inputBusqueda.addEventListener('keyup', function() {
+                const texto = this.value.toLowerCase().replace(/\s/g, ''); // Quitamos espacios para buscar "1A" o "1 A" igual
+                const filas = document.querySelectorAll('table tbody tr');
+                
+                filas.forEach(fila => {
+                    // Evitamos filtrar la fila de "No hay cursos"
+                    if(fila.cells.length === 1) return; 
+
+                    const grado = fila.cells[1].textContent.toLowerCase().replace('°', '');
+                    const letra = fila.cells[2].textContent.toLowerCase();
+                    const anio = fila.cells[3].textContent.toLowerCase();
+                    
+                    // Comprobamos si el texto buscado coincide con la combinación de grado+letra o el año
+                    const combo = grado + letra; 
+                    if (combo.includes(texto) || anio.includes(texto) || grado.includes(texto) || letra.includes(texto)) {
+                        fila.style.display = ''; 
+                    } else {
+                        fila.style.display = 'none'; 
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Anotaciones</title>
+    <link rel="stylesheet" href="/Styles/style.css">
+    <link rel="stylesheet" href="/Styles/anotaciones.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>📝 Gestión de Anotaciones</h1>
+                    <p class="subtitle">Sistema de registro de conducta estudiantil</p>
+                </div>
+                <div class="user-info">
+                    <span>👤 <%= nombre %></span>
+                    <button class="btn-primary" onclick="window.location.href='/notas'">
+                        📚 Notas
+                    </button>
+                    <button class="btn-primary" onclick="window.location.href='/calificaciones'">
+                        📊 Calificaciones
+                    </button>
+                    <button class="btn-logout"  id="btnCerrarSesion" onclick="window.location.href ='/logout'">
+                        🚪 Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- Panel de Búsqueda por RUT -->
+            <div class="busqueda-panel">
+                <div class="busqueda-rut-container">
+                    <label for="inputBuscarRut">🔍 Buscar Alumno por RUT:</label>
+                    <div class="input-buscar-rut">
+                        <input 
+                            type="text" 
+                            id="inputBuscarRut" 
+                            placeholder="Ej: 12.345.678-9"
+                            maxlength="12"
+                        >
+                        <div id="sugerenciasRut"></div>
+                    </div>
+                </div>
+                <button id="btnBuscarRut" class="btn-buscar-rut">
+                    🔎 Buscar
+                </button>
+            </div>
+
+            <!-- Panel de Filtros -->
+            <div class="filtros-panel">
+                <div class="filtro-grupo">
+                    <label for="filtroCurso">📚 Curso:</label>
+                    <select id="filtroCurso">
+                        <option value="">Todos los cursos</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label for="filtroLetra">📝 Letra:</label>
+                    <select id="filtroLetra">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label for="filtroAlumno">👤 Alumno:</label>
+                    <select id="filtroAlumno">
+                        <option value="">Todos los alumnos</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label for="filtroTipo">📋 Tipo:</label>
+<select id="filtroTipo">
+    <option value="">Todas</option>
+    <option value="Positiva">✅ Positivas</option>
+    <option value="Negativa">❌ Negativas</option>
+    <option value="Informativa">📖 Informativas</option>
+</select>
+                </div>
+                
+                <button id="btnLimpiar" class="btn-secondary">🔄 Limpiar</button>
+                <button id="btnNuevaAnotacion" class="btn-success">➕ Nueva Anotación</button>
+            </div>
+
+            <!-- Información del Alumno Seleccionado -->
+            <div id="infoAlumno" class="info-alumno-container" style="display: none;">
+                <div class="info-alumno-card">
+                    <div class="info-alumno-header">
+                        <div>
+                            <h3 id="alumnoNombre"></h3>
+                            <p><strong>RUT:</strong> <span id="alumnoRut"></span></p>
+                            <p><strong>Curso:</strong> <span id="alumnoCurso"></span></p>
+                        </div>
+                        <div class="estadisticas">
+    <div class="stat-item positiva">
+        <span class="stat-number" id="statPositivas">0</span>
+        <span class="stat-label">Positivas</span>
+    </div>
+    <div class="stat-item negativa">
+        <span class="stat-number" id="statNegativas">0</span>
+        <span class="stat-label">Negativas</span>
+    </div>
+    <div class="stat-item informativa">
+        <span class="stat-number" id="statInformativas">0</span>
+        <span class="stat-label">Informativas</span>
+    </div>
+</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Anotaciones -->
+            <div id="contenedorAnotaciones" class="anotaciones-container">
+                <div class="no-data">
+                    <p>👆 Selecciona un alumno o usa los filtros para ver anotaciones</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Nueva Anotación -->
+        <div id="modalNuevaAnotacion" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closeModalNueva">&times;</span>
+                <h2>➕ Nueva Anotación</h2>
+                <div class="modal-body">
+                    <label for="modalAlumno">Alumno:</label>
+                    <select id="modalAlumno" required>
+                        <option value="">Seleccionar alumno...</option>
+                    </select>
+
+                    <label for="modalDocente">Docente:</label>
+                    <select id="modalDocente" required>
+                        <option value="">Seleccionar docente...</option>
+                    </select>
+
+                    <label for="modalTipo">Tipo de Anotación:</label>
+                    <select id="modalTipo" required>
+                        <option value="">Seleccionar tipo...</option>
+                        <option value="Positiva">✅ Positiva</option>
+                        <option value="Negativa">❌ Negativa</option>
+                        <option value="Informativa">📖 Informativa</option>
+                    </select>
+
+                    <label for="modalDescripcion">Descripción:</label>
+                    <textarea 
+                        id="modalDescripcion" 
+                        rows="4" 
+                        placeholder="Describe la anotación (mínimo 10 caracteres)..."
+                        required
+                    ></textarea>
+
+                    <button id="btnGuardarAnotacion" class="btn-success">💾 Guardar Anotación</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Editar Anotación -->
+        <div id="modalEditarAnotacion" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closeModalEditar">&times;</span>
+                <h2>✏️ Editar Anotación</h2>
+                <div class="modal-body">
+                    <input type="hidden" id="editIdAnotacion">
+                    
+                    <div class="info-readonly">
+                        <p><strong>Alumno:</strong> <span id="editAlumnoNombre"></span></p>
+                        <p><strong>Docente:</strong> <span id="editDocenteNombre"></span></p>
+                        <p><strong>Fecha:</strong> <span id="editFecha"></span></p>
+                    </div>
+
+                    <label for="editTipo">Tipo de Anotación:</label>
+                    <select id="editTipo" required>
+                        <option value="Positiva">✅ Positiva</option>
+                        <option value="Negativa">❌ Negativa</option>
+                        <option value="Informativa">📖 Informativa</option> 
+                    </select>
+
+                    <label for="editDescripcion">Descripción:</label>
+                    <textarea 
+                        id="editDescripcion" 
+                        rows="4" 
+                        placeholder="Describe la anotación (mínimo 10 caracteres)..."
+                        required
+                    ></textarea>
+
+                    <div class="button-group">
+                        <button id="btnActualizarAnotacion" class="btn-primary">💾 Guardar Cambios</button>
+                        <button id="btnEliminarAnotacion" class="btn-danger">🗑️ Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/Scripts/validador-rut.js"></script>
+    <script src="/Scripts/anotaciones.js"></script>
+</body>
+</html>
