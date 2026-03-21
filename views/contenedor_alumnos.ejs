@@ -49,9 +49,9 @@
         
         <div class="card-panel">
             <h5 class="center-align" style="color: #495057; font-weight: 600;">➕ Registrar Nuevo Alumno</h5>
-            <form action="/crear_alumno" method="POST" class="row" style="margin-bottom: 0;">
+           <form action="/crear_alumno" method="POST" class="row" style="margin-bottom: 0;">
                 
-                <div class="input-field col s12 m6 l3">
+                <div class="input-field col s12 m6 l2">
                     <i class="material-icons prefix">badge</i>
                     <input id="rut" name="rut" type="text" class="validate" required placeholder="Ej: 12.345.678-9">
                     <label for="rut">RUT</label>
@@ -59,23 +59,28 @@
 
                 <div class="input-field col s12 m6 l3">
                     <i class="material-icons prefix">person</i>
-                    <input id="nombre" name="nombre" type="text" class="validate" required>
-                    <label for="nombre">Nombres</label>
+                    <input id="nombres" name="nombres" type="text" class="validate" required>
+                    <label for="nombres">Nombres</label>
                 </div>
 
                 <div class="input-field col s12 m6 l3">
                     <i class="material-icons prefix">person_outline</i>
-                    <input id="apellido" name="apellido" type="text" class="validate" required>
-                    <label for="apellido">Apellidos</label>
+                    <input id="apellido_paterno" name="apellido_paterno" type="text" class="validate" required>
+                    <label for="apellido_paterno">Ap. Paterno</label>
                 </div>
 
-                <div class="input-field col s12 m6 l3">
+                <div class="input-field col s12 m6 l4">
+                    <input id="apellido_materno" name="apellido_materno" type="text" class="validate">
+                    <label for="apellido_materno">Ap. Materno (Opcional)</label>
+                </div>
+
+                <div class="input-field col s12 m4 l4">
                     <i class="material-icons prefix">date_range</i>
                     <input id="fecha_nacimiento" name="fecha_nacimiento" type="date" class="validate" required>
                     <label for="fecha_nacimiento">F. Nacimiento</label>
                 </div>
 
-                <div class="input-field col s12 m8 offset-m2 l6 offset-l2">
+                <div class="input-field col s12 m4 l4">
                     <i class="material-icons prefix">class</i>
                     <select name="curso_id" required>
                         <option value="" disabled selected>Selecciona un curso</option>
@@ -86,7 +91,7 @@
                     <label>Asignar Curso</label>
                 </div>
 
-                <div class="input-field col s12 m12 l4 center-align">
+                <div class="input-field col s12 m4 l4 center-align">
                     <button class="btn waves-effect waves-light green darken-1" type="submit" style="width: 100%; height: 45px;">
                         Guardar Alumno
                         <i class="material-icons right">add_circle</i>
@@ -120,8 +125,8 @@
                         <% alumnos.forEach(a => { %>
                         <tr>
                             <td style="font-weight: bold;"><%= a.rut %></td>
-                            <td><%= a.nombre %></td>
-                            <td><%= a.apellido %></td>
+                            <td><%= a.nombres %></td>
+                            <td><%= a.apellido_paterno %> <%= a.apellido_materno || '' %></td>
                             <td><%= new Date(a.fecha_nacimiento).toLocaleDateString('es-CL') %></td> 
                             <td>
                                 <% if(a.nombre_curso) { %>
@@ -133,13 +138,14 @@
                             <td>
                                 <a href="#modalEdicionAlumno" 
                                    class="btn-small amber darken-2 modal-trigger waves-effect waves-light" 
-                                   onclick="cargarAlumno('<%= a.id_alumno %>', '<%= a.rut %>', '<%= a.nombre %>', '<%= a.apellido %>', '<%= a.fecha_nacimiento %>', '<%= a.curso_id %>')">
+                                   onclick="cargarAlumno('<%= a.id_alumno %>', '<%= a.rut %>', '<%= a.nombres %>', '<%= a.apellido_paterno %>', '<%= a.apellido_materno %>', '<%= a.fecha_nacimiento %>', '<%= a.curso_id %>')"
+                                >
                                    <i class="material-icons">edit</i>
                                 </a>
                                 <a href="/borrar_alumno/<%= a.id_alumno %>" 
                                    class="btn-small red darken-2 waves-effect waves-light" 
-                                   onclick="return confirm('¿Seguro que deseas desactivar a <%= a.nombre %> <%= a.apellido %>?');">
-                                   <i class="material-icons">delete</i>
+                                   onclick="return confirm('¿Seguro que deseas desactivar a <%= a.nombres %> <%= a.apellido_paterno %>?');">
+                                    <i class="material-icons">delete</i>
                                 </a>
                             </td>
                         </tr>
@@ -175,15 +181,20 @@
                         <label for="fecha_editar">Fecha de Nacimiento</label>
                     </div>
 
-                    <div class="input-field col s12 m6">
+                   <div class="input-field col s12">
                         <i class="material-icons prefix">person</i>
-                        <input id="nombre_editar" name="nombre" type="text" class="validate" required>
+                        <input id="nombre_editar" name="nombres" type="text" class="validate" required>
                         <label for="nombre_editar">Nombres</label>
                     </div>
 
                     <div class="input-field col s12 m6">
-                        <input id="apellido_editar" name="apellido" type="text" class="validate" required>
-                        <label for="apellido_editar">Apellidos</label>
+                        <input id="apellido_paterno_editar" name="apellido_paterno" type="text" class="validate" required>
+                        <label for="apellido_paterno_editar">Apellido Paterno</label>
+                    </div>
+
+                    <div class="input-field col s12 m6">
+                        <input id="apellido_materno_editar" name="apellido_materno" type="text" class="validate">
+                        <label for="apellido_materno_editar">Apellido Materno</label>
                     </div>
 
                     <div class="input-field col s12">
@@ -214,11 +225,16 @@
         });
 
         // Función para cargar datos en el Modal de Edición
-        function cargarAlumno(id, rut, nombre, apellido, fecha, id_curso) {
+        // Función para cargar datos en el Modal de Edición
+        function cargarAlumno(id, rut, nombres, apellido_paterno, apellido_materno, fecha, id_curso) {
             document.getElementById('id_alumno_editar').value = id;
             document.getElementById('rut_editar').value = rut;
-            document.getElementById('nombre_editar').value = nombre;
-            document.getElementById('apellido_editar').value = apellido;
+            document.getElementById('nombre_editar').value = nombres;
+            document.getElementById('apellido_paterno_editar').value = apellido_paterno;
+            document.getElementById('apellido_materno_editar').value = apellido_materno;
+
+            // Formatear Fecha
+            // ... (el resto del código de la fecha y el select se mantiene igual)
 
             // Formatear Fecha
             let fechaFormateada = "";

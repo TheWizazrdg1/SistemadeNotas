@@ -181,7 +181,7 @@ function seleccionarAlumnoDirecto(alumno) {
     todosLosAlumnos.forEach(a => {
         const option = document.createElement('option');
         option.value = a.id_alumno;
-        option.textContent = `${a.nombre} ${a.apellido} - ${a.grado}° ${a.nombre_curso}`;
+        option.textContent = `${a.apellido_paterno} ${a.apellido_materno || ''}, ${a.nombres}`;
         filtroAlumno.appendChild(option);
     });
 
@@ -222,7 +222,7 @@ function aplicarFiltrosAlumnos() {
     alumnosFiltrados.forEach(alumno => {
         const option = document.createElement('option');
         option.value = alumno.id_alumno;
-        option.textContent = `${alumno.nombre} ${alumno.apellido}${alumno.grado ? ` - ${alumno.grado}° ${alumno.nombre_curso}` : ''}`;
+        option.textContent = `${alumno.apellido_paterno} ${alumno.apellido_materno || ''}, ${alumno.nombres}${alumno.grado ? ` - ${alumno.grado}° ${alumno.nombre_curso}` : ''}`;
         filtroAlumno.appendChild(option);
     });
     
@@ -273,7 +273,7 @@ function mostrarCalificaciones(datos) {
     
     // Mostrar info del alumno
     const primerDato = datos[0];
-    nombreAlumno.textContent = `${primerDato.nombre} ${primerDato.apellido}`;
+   nombreAlumno.textContent = `${primerDato.nombres} ${primerDato.apellido_paterno} ${primerDato.apellido_materno || ''}`;
     rutAlumno.textContent = primerDato.rut;
     cursoAlumno.textContent = `${primerDato.grado}° ${primerDato.nombre_curso}`;
     infoAlumno.style.display = 'block';
@@ -408,7 +408,7 @@ async function descargarPDF() {
         const doc = new jsPDF();
         
         const primerDato = datosActuales[0];
-        const nombreCompleto = `${primerDato.nombre} ${primerDato.apellido}`;
+        const nombreCompleto = `${primerDato.nombres} ${primerDato.apellido_paterno} ${primerDato.apellido_materno || ''}`;
         const rut = primerDato.rut;
         const curso = `${primerDato.grado}° ${primerDato.nombre_curso}`;
         

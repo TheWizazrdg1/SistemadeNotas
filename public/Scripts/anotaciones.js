@@ -150,7 +150,7 @@ function buscarPorRutDirecto() {
     }
     
     seleccionarAlumnoPorRut(alumnoEncontrado);
-    mostrarMensaje(`✅ Alumno encontrado: ${alumnoEncontrado.nombre} ${alumnoEncontrado.apellido}`, 'success');
+    mostrarMensaje(`✅ Alumno encontrado: ${alumnoEncontrado.nombres} ${alumnoEncontrado.apellido_paterno}`, 'success');
 }
 
 function seleccionarAlumnoPorRut(alumno) {
@@ -248,7 +248,7 @@ async function cargarAlumnos() {
         todosLosAlumnos.forEach(alumno => {
             const option = document.createElement('option');
             option.value = alumno.id_alumno;
-            option.textContent = `${alumno.nombre} ${alumno.apellido} - ${alumno.rut}`;
+            option.textContent = `${alumno.nombres} ${alumno.apellido_paterno} ${alumno.apellido_materno || ''} - ${alumno.rut}`;
             modalAlumno.appendChild(option);
         });
     } catch (error) {
@@ -373,7 +373,7 @@ function aplicarFiltrosAlumnos() {
     
     if (alumnosFiltrados.length > 0) {
         // Ordenar alfabéticamente
-        alumnosFiltrados.sort((a, b) => a.apellido.localeCompare(b.apellido));
+        alumnosFiltrados.sort((a, b) => a.apellido_paterno.localeCompare(b.apellido_paterno));
 
         alumnosFiltrados.forEach(alumno => {
             const option = document.createElement('option');
@@ -381,7 +381,7 @@ function aplicarFiltrosAlumnos() {
             
             // Texto informativo: Apellido Nombre (Curso)
             const textoCurso = alumno.grado ? ` (${alumno.grado}° ${alumno.nombre_curso})` : ' (Sin curso)';
-            option.textContent = `${alumno.apellido} ${alumno.nombre}${textoCurso}`;
+            option.textContent = `${alumno.apellido_paterno} ${alumno.apellido_materno || ''}, ${alumno.nombres}${textoCurso}`;
             
             filtroAlumno.appendChild(option);
         });
@@ -410,7 +410,7 @@ function seleccionarAlumnoPorSelect() {
     alumnoSeleccionado = todosLosAlumnos.find(a => a.id_alumno == idAlumno);
     
     if (alumnoSeleccionado) {
-        alumnoNombre.textContent = `${alumnoSeleccionado.nombre} ${alumnoSeleccionado.apellido}`;
+        alumnoNombre.textContent = `${alumnoSeleccionado.nombres} ${alumnoSeleccionado.apellido_paterno} ${alumnoSeleccionado.apellido_materno || ''}`;
         alumnoRut.textContent = window.RutValidator ? 
             window.RutValidator.formatear(alumnoSeleccionado.rut) : 
             alumnoSeleccionado.rut;
@@ -469,7 +469,7 @@ function mostrarAnotaciones(anotaciones) {
                 </div>
                 <div class="anotacion-body">
                     <div class="anotacion-alumno">
-                        <strong>${anotacion.alumno_nombre} ${anotacion.alumno_apellido}</strong>
+                        <strong>${anotacion.alumno_nombres} ${anotacion.alumno_apellido_paterno} ${anotacion.alumno_apellido_materno || ''}</strong>
                         ${anotacion.grado ? `<span class="curso-badge">${anotacion.grado}° ${anotacion.nombre_curso}</span>` : ''}
                     </div>
                     <div class="anotacion-descripcion">
@@ -517,7 +517,7 @@ async function abrirModalEditar(idAnotacion) {
         
         document.getElementById('editIdAnotacion').value = anotacion.id_anotacion;
         document.getElementById('editAlumnoNombre').textContent = 
-            `${anotacion.alumno_nombre} ${anotacion.alumno_apellido}`;
+    `${anotacion.alumno_nombres} ${anotacion.alumno_apellido_paterno} ${anotacion.alumno_apellido_materno || ''}`;
         document.getElementById('editDocenteNombre').textContent = 
             `${anotacion.docente_nombre} ${anotacion.docente_apellido}`;
         document.getElementById('editFecha').textContent = 

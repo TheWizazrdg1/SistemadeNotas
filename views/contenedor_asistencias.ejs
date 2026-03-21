@@ -232,7 +232,7 @@
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${index + 1}</td>
-                        <td style="font-weight: 500;">${alumno.apellido}, ${alumno.nombre}</td>
+                        <td style="font-weight: 500;">${alumno.apellido_paterno} ${alumno.apellido_materno || ''}, ${alumno.nombres}</td>
                         <td class="center-align">
                             <label>
                                 <input name="estado_${alumno.id_alumno}" class="with-gap" type="radio" value="Presente" ${estadoActual === 'Presente' ? 'checked' : ''} />
@@ -363,7 +363,7 @@
                     <td style="font-weight: bold;">${fechaBonita}</td>
                     <td>${registro.hora}</td>
                     <td class="grey-text">${registro.rut}</td>
-                    <td>${registro.apellido}, ${registro.nombre}</td>
+                    <td>${registro.apellido_paterno} ${registro.apellido_materno || ''}, ${registro.nombres}</td>
                     <td class="${colorEstado} style="font-weight: bold;">${registro.estado}</td>
                 `;
                 tablaBodyHistorial.appendChild(tr);
@@ -405,7 +405,7 @@
                     "Fecha": fechaBonita,
                     "Hora": registro.hora,
                     "RUT": registro.rut,
-                    "Alumno": `${registro.apellido}, ${registro.nombre}`,
+                    "Alumno": `${registro.apellido_paterno} ${registro.apellido_materno || ''}, ${registro.nombres}`,
                     "Estado Asistencia": registro.estado
                 };
             });

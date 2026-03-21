@@ -246,9 +246,15 @@ function procesarYMostrarDatos(datos) {
     datos.forEach(row => {
         // Crear alumno si no existe
         if (!alumnosPorId[row.id_alumno]) {
+            
+            // === AQUÍ ESTÁ LA MAGIA DE LA NORMALIZACIÓN ===
+            // Armamos el nombre verificando si tiene apellido materno o no (para que no diga "null")
+            const apellidoMat = row.apellido_materno ? ` ${row.apellido_materno}` : '';
+            const nombreCompleto = `${row.apellido_paterno}${apellidoMat}, ${row.nombres}`;
+            
             alumnosPorId[row.id_alumno] = {
                 id: row.id_alumno,
-                nombre: `${row.nombre} ${row.apellido}`,
+                nombre: nombreCompleto, // Quedará como: "Fuentealba Meneses, Gerson Benjasmin"
                 rut: row.rut,
                 curso: row.grado && row.nombre_curso ? `${row.grado}° ${row.nombre_curso}` : '-',
                 notas: {}
@@ -257,27 +263,26 @@ function procesarYMostrarDatos(datos) {
         
         // Agregar evaluación (con o sin nota)
         if (row.evaluacion && row.id_nota) {
-            // Crear key única por ASIGNATURA + EVALUACIÓN + FECHA (no por id_nota)
-            // Esto evita duplicados de la misma evaluación
+            // Crear key única por ASIGNATURA + EVALUACIÓN + FECHA
             const keyEvaluacion = `${row.nombre_asignatura}_${row.evaluacion}_${row.fecha}`;
             
-            // 1. Armamos el nombre del profesor con los datos del JOIN
-const nombreProfesor = (row.nombre_docente && row.apellido_docente) 
-    ? `${row.nombre_docente} ${row.apellido_docente}` 
-    : 'Profesor no asignado';
+            // Armamos el nombre del profesor con los datos del JOIN
+            const nombreProfesor = (row.nombre_docente && row.apellido_docente) 
+                ? `${row.nombre_docente} ${row.apellido_docente}` 
+                : 'Profesor no asignado';
 
-// 2. Guardamos la fecha formateada en una variable para que sea más fácil de leer
-const fechaFormateada = row.fecha ? new Date(row.fecha).toLocaleDateString('es-CL') : 'S/F';
+            // Guardamos la fecha formateada en una variable para que sea más fácil de leer
+            const fechaFormateada = row.fecha ? new Date(row.fecha).toLocaleDateString('es-CL') : 'S/F';
 
-// 3. Tu nuevo objeto infoNota
-const infoNota = {
-    asignatura: row.nombre_asignatura || 'Sin asignatura',
-    evaluacion: row.evaluacion,
-    fecha: row.fecha ? new Date(row.fecha).toLocaleDateString('es-CL') : '',
-    docente: nombreProfesor,          // <-- Guardamos el nombre del profe
-    fechaVisual: fechaFormateada,     // <-- Guardamos la fecha visual
-    displayName: `${row.nombre_asignatura || 'Sin asignatura'} - ${row.evaluacion} (${fechaFormateada})`
-};
+            // Objeto infoNota
+            const infoNota = {
+                asignatura: row.nombre_asignatura || 'Sin asignatura',
+                evaluacion: row.evaluacion,
+                fecha: row.fecha ? new Date(row.fecha).toLocaleDateString('es-CL') : '',
+                docente: nombreProfesor,
+                fechaVisual: fechaFormateada,
+                displayName: `${row.nombre_asignatura || 'Sin asignatura'} - ${row.evaluacion} (${fechaFormateada})`
+            };
             
             // Guardar en el mapa global de evaluaciones (evita duplicados)
             if (!notasMap.has(keyEvaluacion)) {
@@ -285,7 +290,6 @@ const infoNota = {
             }
             
             // Guardar la nota del alumno (puede ser NULL)
-            // Si ya existe, solo actualizar si esta tiene valor y la anterior no
             if (!alumnosPorId[row.id_alumno].notas[keyEvaluacion] || 
                 (row.nota !== null && alumnosPorId[row.id_alumno].notas[keyEvaluacion].nota === null)) {
                 alumnosPorId[row.id_alumno].notas[keyEvaluacion] = {
@@ -304,7 +308,6 @@ const infoNota = {
     // Convertir el mapa a array y ordenar por fecha
     const listaNotas = Array.from(notasMap.entries())
         .sort((a, b) => {
-            // Extraer fecha del key (formato: asignatura_evaluacion_fecha)
             const fechaA = a[0].split('_')[2] || '';
             const fechaB = b[0].split('_')[2] || '';
             return new Date(fechaA) - new Date(fechaB);

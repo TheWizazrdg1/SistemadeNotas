@@ -205,10 +205,10 @@ app.get('/api/alumnos_curso/:id_curso', verificarSesion, async (req, res) => {
         const { id_curso } = req.params;
         // Buscamos solo los alumnos activos de ese curso
         const sql = `
-            SELECT id_alumno, rut, nombre, apellido 
+            SELECT id_alumno, rut, nombres, apellido_paterno, apellido_materno 
             FROM alumnos 
             WHERE curso_id = ? AND estado = 1 
-            ORDER BY apellido ASC, nombre ASC
+            ORDER BY apellido_paterno ASC, apellido_materno ASC, nombres ASC
         `;
         const alumnos = await queryAsync(sql, [id_curso]);
         res.json(alumnos);
@@ -218,11 +218,7 @@ app.get('/api/alumnos_curso/:id_curso', verificarSesion, async (req, res) => {
     }
 });
 
-// 3. Guardar la asistencia enviada por el profesor
-// 3. Guardar la asistencia enviada por el profesor (CON HORA)
-// 3. Guardar la asistencia (CORREGIDO PARA ACTUALIZAR EN VEZ DE DUPLICAR)
-// 3. Guardar la asistencia (VERSIÓN INTELIGENTE: Conserva la hora original)
-// 3. Guardar la asistencia (VERSIÓN CON ASIGNATURA)
+
 app.post('/guardar_asistencias', verificarSesion, async (req, res) => {
     try {
         // Ahora recibimos también el asignatura_id desde el frontend
@@ -272,11 +268,11 @@ app.get('/api/historial_asistencia/:id_curso', verificarSesion, async (req, res)
         
         // Unimos asistencias con alumnos para tener el nombre y el estado
         const sql = `
-            SELECT a.rut, a.nombre, a.apellido, ast.fecha, ast.hora, ast.estado
+            SELECT a.rut, a.nombres, a.apellido_paterno, a.apellido_materno, ast.fecha, ast.hora, ast.estado
             FROM asistencias ast
             JOIN alumnos a ON ast.id_alumno = a.id_alumno
             WHERE a.curso_id = ?
-            ORDER BY ast.fecha DESC, a.apellido ASC, a.nombre ASC
+            ORDER BY ast.fecha DESC, a.apellido_paterno ASC, a.nombres ASC
         `;
         
         const historial = await queryAsync(sql, [id_curso]);
@@ -462,29 +458,42 @@ app.get('/borrar_alumno/:id', verificarSesion, async (req, res) => {
 
 // --- RUTA PARA CREAR ALUMNO ---
 // --- RUTA PARA CREAR ALUMNO (CON CURSO) ---
+// --- RUTA PARA CREAR ALUMNO ---
 app.post('/crear_alumno', verificarSesion, async (req, res) => {
     try {
-        // 1. Agregamos 'curso_id' a la desestructuración
-        const { rut, nombre, apellido, fecha_nacimiento, curso_id } = req.body;
+        const { rut, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, curso_id } = req.body;
 
-        // Validación básica
-        if (!rut || !nombre || !apellido || !fecha_nacimiento || !curso_id) {
-            return res.send('Faltan datos por completar (asegúrate de seleccionar un curso)');
+        if (!rut || !nombres || !apellido_paterno || !fecha_nacimiento || !curso_id) {
+            return res.send('Faltan datos por completar');
         }
 
-        // 2. Actualizamos la SQL para incluir la columna 'curso_id'
-        const sql = 'INSERT INTO alumnos (rut, nombre, apellido, fecha_nacimiento, curso_id) VALUES (?, ?, ?, ?, ?)';
-        
-        // 3. Pasamos 'curso_id' en el array de valores
-        await queryAsync(sql, [rut, nombre, apellido, fecha_nacimiento, curso_id]);
+        const sql = 'INSERT INTO alumnos (rut, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, curso_id) VALUES (?, ?, ?, ?, ?, ?)';
+        // Si no mandan apellido materno, guardamos null
+        await queryAsync(sql, [rut, nombres, apellido_paterno, apellido_materno || null, fecha_nacimiento, curso_id]);
 
-        console.log(`Alumno creado: ${nombre} ${apellido} en el curso ID: ${curso_id}`);
-        
         res.redirect('/alumnos'); 
-
     } catch (error) {
         console.error('Error al crear alumno:', error);
-        res.status(500).send('Error al crear el alumno (Posible RUT duplicado)');
+        res.status(500).send('Error al crear el alumno');
+    }
+});
+
+// --- RUTA PARA EDITAR ALUMNO ---
+app.post('/editar_alumno', verificarSesion, async (req, res) => {
+    try {
+        const { id_alumno, rut, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, curso_id } = req.body;
+
+        const sql = `
+            UPDATE alumnos 
+            SET rut = ?, nombres = ?, apellido_paterno = ?, apellido_materno = ?, fecha_nacimiento = ?, curso_id = ? 
+            WHERE id_alumno = ?
+        `;
+
+        await queryAsync(sql, [rut, nombres, apellido_paterno, apellido_materno || null, fecha_nacimiento, curso_id, id_alumno]);
+        res.redirect('/alumnos'); 
+    } catch (error) {
+        console.error('Error al editar alumno:', error);
+        res.status(500).send('Error al actualizar alumno');
     }
 });
 // --- RUTA PARA EDITAR ALUMNO ---
@@ -851,19 +860,10 @@ app.get('/api/calificaciones/:id_alumno', async (req, res) => {
         
         const sql = `
             SELECT 
-                n.id_nota,
-                n.nota,
-                n.evaluacion,
-                n.fecha,
-                a.id_alumno,
-                a.nombre,
-                a.apellido,
-                a.rut,
-                asig.nombre_asignatura,
-                c.grado,
-                c.nombre_curso,
-                d.nombre as docente_nombre,
-                d.apellido as docente_apellido
+                n.id_nota, n.nota, n.evaluacion, n.fecha,
+                a.id_alumno, a.nombres, a.apellido_paterno, a.apellido_materno, a.rut,
+                asig.nombre_asignatura, c.grado, c.nombre_curso,
+                d.nombre as docente_nombre, d.apellido as docente_apellido
             FROM notas n
             INNER JOIN alumnos a ON n.id_alumno = a.id_alumno
             INNER JOIN docente_asignatura da ON n.id_docente_asignatura = da.id_docente_asignatura
@@ -887,16 +887,12 @@ app.get('/api/calificaciones/:id_alumno', async (req, res) => {
 app.get('/api/alumnos', async (req, res) => {
     try {
         const sql = `
-            SELECT 
-                a.id_alumno,
-                a.nombre,
-                a.apellido,
-                a.rut,
-                c.grado,
-                c.nombre_curso
+           SELECT 
+                a.id_alumno, a.nombres, a.apellido_paterno, a.apellido_materno, a.rut,
+                c.grado, c.nombre_curso
             FROM alumnos a
             LEFT JOIN cursos c ON a.curso_id = c.id_curso
-            ORDER BY a.nombre, a.apellido
+            ORDER BY a.apellido_paterno, a.nombres
         `;
         
         const resultados = await queryAsync(sql);
@@ -933,22 +929,12 @@ app.get('/api/notas', (req, res) => {
     const { curso_id } = req.query;
     
     let query = `
-        SELECT DISTINCT
-            a.id_alumno,
-            a.nombre,
-            a.apellido,
-            a.rut,
-            c.nombre_curso,
-            c.grado,
-            c.id_curso,
-            asig.nombre_asignatura,
-            n.evaluacion,
-            n.nota,
-            n.fecha,
-            n.id_nota,
-            d.nombre AS nombre_docente,    /* <-- NUEVO: Traer nombre */
-            d.apellido AS apellido_docente /* <-- NUEVO: Traer apellido */
-        FROM alumnos a
+    SELECT DISTINCT
+            a.id_alumno, a.nombres, a.apellido_paterno, a.apellido_materno, a.rut,
+            c.nombre_curso, c.grado, c.id_curso,
+            asig.nombre_asignatura, n.evaluacion, n.nota, n.fecha, n.id_nota,
+            d.nombre AS nombre_docente, d.apellido AS apellido_docente
+         FROM alumnos a
         LEFT JOIN cursos c ON a.curso_id = c.id_curso
         LEFT JOIN notas n ON a.id_alumno = n.id_alumno
         LEFT JOIN docente_asignatura da ON n.id_docente_asignatura = da.id_docente_asignatura
@@ -966,7 +952,7 @@ app.get('/api/notas', (req, res) => {
         params.push(curso_id);
     }
     
-    query += ' ORDER BY a.apellido, a.nombre, n.fecha';
+    query += ' ORDER BY a.apellido_paterno, a.nombres, n.fecha';
     
     oConexion.query(query, params, (error, resultados) => {
         if (error) {
@@ -1302,20 +1288,10 @@ app.get('/api/anotaciones', async (req, res) => {
         const { id_alumno, tipo, curso_id } = req.query;
         
         let query = `
-            SELECT 
-                an.id_anotacion,
-                an.tipo,
-                an.descripcion,
-                an.fecha,
-                a.id_alumno,
-                a.nombre as alumno_nombre,
-                a.apellido as alumno_apellido,
-                a.rut,
-                c.grado,
-                c.nombre_curso,
-                d.id_docente,
-                d.nombre as docente_nombre,
-                d.apellido as docente_apellido
+           SELECT 
+                an.id_anotacion, an.tipo, an.descripcion, an.fecha,
+                a.id_alumno, a.nombres as alumno_nombres, a.apellido_paterno as alumno_apellido_paterno, a.apellido_materno as alumno_apellido_materno, a.rut,
+                c.grado, c.nombre_curso, d.id_docente, d.nombre as docente_nombre, d.apellido as docente_apellido
             FROM anotaciones an
             INNER JOIN alumnos a ON an.id_alumno = a.id_alumno
             INNER JOIN docentes d ON an.id_docente = d.id_docente
@@ -1360,20 +1336,10 @@ app.get('/api/anotaciones/:id', async (req, res) => {
         const { id } = req.params;
         
         const query = `
-            SELECT 
-                an.id_anotacion,
-                an.tipo,
-                an.descripcion,
-                an.fecha,
-                an.id_alumno,
-                an.id_docente,
-                a.nombre as alumno_nombre,
-                a.apellido as alumno_apellido,
-                a.rut,
-                c.grado,
-                c.nombre_curso,
-                d.nombre as docente_nombre,
-                d.apellido as docente_apellido
+           SELECT 
+                an.id_anotacion, an.tipo, an.descripcion, an.fecha, an.id_alumno, an.id_docente,
+                a.nombres as alumno_nombres, a.apellido_paterno as alumno_apellido_paterno, a.apellido_materno as alumno_apellido_materno, a.rut,
+                c.grado, c.nombre_curso, d.nombre as docente_nombre, d.apellido as docente_apellido
             FROM anotaciones an
             INNER JOIN alumnos a ON an.id_alumno = a.id_alumno
             INNER JOIN docentes d ON an.id_docente = d.id_docente

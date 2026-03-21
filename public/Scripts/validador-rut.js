@@ -227,7 +227,7 @@ class BuscadorRut {
                     ${iconoValidacion} <strong>${formatearRut(alumno.rut)}</strong>
                 </div>
                 <div class="sugerencia-nombre">
-                    ${alumno.nombre} ${alumno.apellido}
+                  ${alumno.nombres} ${alumno.apellido_paterno} ${alumno.apellido_materno || ''}
                 </div>
                 ${alumno.grado ? `
                     <div class="sugerencia-curso">
