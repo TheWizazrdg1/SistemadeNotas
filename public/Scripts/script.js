@@ -297,7 +297,10 @@ function procesarYMostrarDatos(datos) {
                     fecha: row.fecha,
                     id_nota: row.id_nota,
                     evaluacion: row.evaluacion,
-                    asignatura: row.nombre_asignatura
+                    asignatura: row.nombre_asignatura,
+                    nota_anterior: row.nota_anterior,   
+                    modificado_por: row.modificado_por
+
                 };
             }
         }
@@ -397,10 +400,22 @@ function generarFilas(alumnos, notasArray) {
                 const notaData = alumno.notas[keyEvaluacion];
                 
                 // Verificar si tiene nota o es NULL
+                // Verificar si tiene nota o es NULL
                 if (notaData.nota !== null && notaData.nota !== undefined) {
                     const nota = parseFloat(notaData.nota);
                     
-                    td.innerHTML = `<span class="nota ${getColorNota(nota)}">${nota.toFixed(1)}</span>`;
+                    // 1. Armamos la nota normal
+                    let htmlContenido = `<span class="nota ${getColorNota(nota)}">${nota.toFixed(1)}</span>`;
+                    
+                    // 2. Si es ADMIN y hay historial guardado, le ponemos el ojito
+                    if (typeof ROL_USUARIO !== 'undefined' && ROL_USUARIO === 'admin' && notaData.nota_anterior !== null) {
+                        htmlContenido += `<span class="icono-historial" 
+                                            onclick="verHistorial(event, '${notaData.nota_anterior}', '${notaData.modificado_por}')" 
+                                            style="cursor: pointer; font-size: 14px; margin-left: 6px; opacity: 0.8;" 
+                                            title="Ver historial de cambios">👁️</span>`;
+                    }
+                    
+                    td.innerHTML = htmlContenido;
                     td.dataset.idNota = notaData.id_nota;
                     td.dataset.alumno = alumno.nombre;
                     td.dataset.evaluacion = `${notaData.asignatura} - ${notaData.evaluacion}`;
@@ -409,7 +424,7 @@ function generarFilas(alumnos, notasArray) {
                     
                     sumaNotas += nota;
                     cantidadNotas++;
-                } else {
+                } else { 
                     // Nota NULL - celda vacía pero editable
                     td.innerHTML = '<span class="sin-nota pendiente">Pendiente</span>';
                     td.dataset.idNota = notaData.id_nota;
@@ -472,8 +487,14 @@ function hacerCeldaEditable(celda) {
     input.focus();
     input.select();
     
+    // --- AQUÍ ESTÁ EL CANDADO QUE FALTABA ---
+    let guardando = false; 
+    
     // Función para guardar
     const guardarNota = async () => {
+        if (guardando) return; // Si ya está guardando, bloqueamos el segundo intento
+        guardando = true;      // Cerramos el candado
+        
         const nuevaNota = parseFloat(input.value);
         
         // Validar nota
@@ -485,8 +506,8 @@ function hacerCeldaEditable(celda) {
         
         if (isNaN(nuevaNota) || nuevaNota < 1.0 || nuevaNota > 7.0) {
             alert('Por favor ingresa una nota válida entre 1.0 y 7.0');
-           
-            
+            celda.innerHTML = contenidoOriginal;
+            return;
         }
         
         // Mostrar loading
@@ -528,9 +549,10 @@ function hacerCeldaEditable(celda) {
     // Guardar con Enter
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            guardarNota();
+            input.blur(); // Simula un clic afuera para que guarde 1 sola vez sin errores
         } else if (e.key === 'Escape') {
             // Cancelar con ESC
+            guardando = true; // Bloquea el intento de guardado automático
             celda.innerHTML = contenidoOriginal;
         }
     });
@@ -852,4 +874,20 @@ async function crearNuevaEvaluacion() {
         btnCrearEvaluacion.disabled = false;
         btnCrearEvaluacion.textContent = 'Crear Evaluación';
     }
+}
+// Función para que los administradores vean el historial de una nota
+function verHistorial(event, notaAnterior, modificadoPor) {
+    event.stopPropagation(); // Evita que se active el "doble clic" para editar al presionar el ojito
+    
+    const notaLimpia = parseFloat(notaAnterior).toFixed(1);
+    
+    // Usamos el Toast de Materialize para una alerta elegante y rápida
+    M.toast({
+        html: `<div style="line-height: 1.5;">
+                 <span>🕒 <b>Nota anterior:</b> ${notaLimpia}</span><br>
+                 <span style="color: #ffd54f;">👤 <b>Por:</b> ${modificadoPor}</span>
+               </div>`, 
+        classes: 'purple darken-3 rounded', 
+        displayLength: 5000
+    });
 }

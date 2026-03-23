@@ -71,7 +71,7 @@
 
                 <div class="input-field col s12 m6 l4">
                     <input id="apellido_materno" name="apellido_materno" type="text" class="validate">
-                    <label for="apellido_materno">Ap. Materno (Opcional)</label>
+                    <label for="apellido_materno">Ap. Materno</label>
                 </div>
 
                 <div class="input-field col s12 m4 l4">
@@ -92,7 +92,7 @@
                 </div>
 
                 <div class="input-field col s12 m4 l4 center-align">
-                    <button class="btn waves-effect waves-light green darken-1" type="submit" style="width: 100%; height: 45px;">
+                    <button class="btn waves-effect waves-light green darken-1" id="btnGuardarAlumno" type="submit" style="width: 100%; height: 45px;">
                         Guardar Alumno
                         <i class="material-icons right">add_circle</i>
                     </button>
@@ -219,44 +219,112 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+       document.addEventListener('DOMContentLoaded', function() {
             // Inicializar Materialize (Modales, Selects, etc)
             M.AutoInit();
-        });
 
-        // Función para cargar datos en el Modal de Edición
-        // Función para cargar datos en el Modal de Edición
-        function cargarAlumno(id, rut, nombres, apellido_paterno, apellido_materno, fecha, id_curso) {
-            document.getElementById('id_alumno_editar').value = id;
-            document.getElementById('rut_editar').value = rut;
-            document.getElementById('nombre_editar').value = nombres;
-            document.getElementById('apellido_paterno_editar').value = apellido_paterno;
-            document.getElementById('apellido_materno_editar').value = apellido_materno;
-
-            // Formatear Fecha
-            // ... (el resto del código de la fecha y el select se mantiene igual)
-
-            // Formatear Fecha
-            let fechaFormateada = "";
-            if(fecha) {
-                try {
-                    fechaFormateada = new Date(fecha).toISOString().split('T')[0];
-                } catch (e) {
-                    console.error("Error formateando fecha", e);
+            // ==========================================
+            // VALIDACIÓN DE RUT: DUPLICADOS Y MATEMÁTICA
+            // ==========================================
+            
+            // 1. Extraemos los RUTs de la tabla para buscar duplicados
+            const filasTabla = document.querySelectorAll('table tbody tr');
+            const rutsExistentes = [];
+            
+            filasTabla.forEach(fila => {
+                if (fila.cells.length > 1) {
+                    const rutEnTabla = fila.cells[0].textContent.trim();
+                    rutsExistentes.push(rutEnTabla);
                 }
-            }
-            document.getElementById('fecha_editar').value = fechaFormateada;
+            });
+            
+            // Funciones auxiliares
+            const limpiarRut = (rut) => rut.replace(/[^0-9kK]/g, '').toUpperCase();
+            const rutsLimpios = rutsExistentes.map(limpiarRut);
 
-            // Seleccionar Curso
-            var selectElement = document.getElementById('curso_editar');
-            if(selectElement && id_curso) {
-                selectElement.value = id_curso;
-                M.FormSelect.init(selectElement); // Reinicializar select
+            // 2. FÓRMULA OFICIAL DEL RUT CHILENO (Módulo 11)
+            function validarRutMatematico(rut) {
+                let valor = limpiarRut(rut);
+                if (valor.length < 8) return false;
+
+                let cuerpo = valor.slice(0, -1);
+                let dv = valor.slice(-1);
+
+                let suma = 0;
+                let multiplo = 2;
+
+                // Para cada dígito del cuerpo, de derecha a izquierda
+                for (let i = 1; i <= cuerpo.length; i++) {
+                    let index = multiplo * valor.charAt(cuerpo.length - i);
+                    suma = suma + index;
+                    multiplo = multiplo < 7 ? multiplo + 1 : 2;
+                }
+
+                let dvEsperado = 11 - (suma % 11);
+                dvEsperado = (dvEsperado == 11) ? 0 : dvEsperado;
+                dvEsperado = (dvEsperado == 10) ? "K" : dvEsperado.toString();
+
+                return dvEsperado === dv;
             }
 
-            // Actualizar etiquetas para que no se sobrepongan al texto
-            M.updateTextFields();
-        }
+            const inputRut = document.getElementById('rut');
+            const btnGuardar = document.getElementById('btnGuardarAlumno');
+            
+            // Empezamos con el botón deshabilitado por seguridad
+            if(btnGuardar) {
+                btnGuardar.disabled = true;
+                btnGuardar.classList.replace('green', 'grey');
+            }
+
+            if(inputRut && btnGuardar) {
+                inputRut.addEventListener('input', function() {
+                    const rutLimpio = limpiarRut(this.value);
+                    
+                    // Solo validamos si ya escribió al menos 8 caracteres (para no molestar mientras tipea)
+                    if (rutLimpio.length >= 8) {
+                        const esValido = validarRutMatematico(this.value);
+                        const esDuplicado = rutsLimpios.includes(rutLimpio);
+
+                        if (!esValido) {
+                            // RUT Matemáticamente Falso
+                            btnGuardar.disabled = true;
+                            btnGuardar.classList.replace('green', 'grey');
+                            this.classList.add('invalid');
+                            this.classList.remove('valid');
+                            
+                            // Truquito para no spamear mensajes: solo mostramos el toast si el input pierde el foco luego
+                        } else if (esDuplicado) {
+                            // RUT Válido pero ya existe
+                            btnGuardar.disabled = true;
+                            btnGuardar.classList.replace('green', 'grey');
+                            this.classList.add('invalid');
+                            this.classList.remove('valid');
+                            M.toast({html: '⚠️ Este RUT ya está registrado', classes: 'red rounded'});
+                        } else {
+                            // RUT Válido y Nuevo (¡ÉXITO!)
+                            btnGuardar.disabled = false;
+                            btnGuardar.classList.replace('grey', 'green');
+                            this.classList.remove('invalid');
+                            this.classList.add('valid'); // Pone la rayita verde debajo del input
+                        }
+                    } else {
+                        // Mientras escribe, mantenemos bloqueado pero sin alertas rojas
+                        btnGuardar.disabled = true;
+                        btnGuardar.classList.replace('green', 'grey');
+                        this.classList.remove('invalid', 'valid');
+                    }
+                });
+
+                // Si el usuario sale del input y dejó un RUT inválido, ahí le lanzamos la alerta roja
+                inputRut.addEventListener('blur', function() {
+                    const rutLimpio = limpiarRut(this.value);
+                    if (rutLimpio.length > 0 && rutLimpio.length >= 8 && !validarRutMatematico(this.value)) {
+                        M.toast({html: '❌ El RUT ingresado no es válido', classes: 'red rounded'});
+                    }
+                });
+            }
+        });
+        
 
         // Script del Buscador en tiempo real
         const inputBusqueda = document.getElementById('buscador_alumnos');
@@ -281,6 +349,7 @@
                 });
             });
         }
+        
     </script>
 </body>
 </html>
