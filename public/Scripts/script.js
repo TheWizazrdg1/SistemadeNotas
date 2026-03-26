@@ -412,7 +412,7 @@ function generarFilas(alumnos, notasArray) {
                         htmlContenido += `<span class="icono-historial" 
                                             onclick="verHistorial(event, '${notaData.nota_anterior}', '${notaData.modificado_por}')" 
                                             style="cursor: pointer; font-size: 14px; margin-left: 6px; opacity: 0.8;" 
-                                            title="Ver historial de cambios">👁️</span>`;
+                                            `;
                     }
                     
                     td.innerHTML = htmlContenido;

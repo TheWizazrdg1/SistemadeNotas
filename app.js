@@ -1549,3 +1549,85 @@ app.get('/api/anotaciones/estadisticas/:id_alumno', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener estadísticas' });
     }
 });
+
+// Actualizar una nota (VERSIÓN CON HISTORIAL)
+app.put('/api/notas/:id', verificarSesion, async (req, res) => {
+    const { id } = req.params;
+    const { nota } = req.body;
+    const id_usuario = req.session.id_usuario; // Obtenemos quién está logueado
+
+    if (!nota || nota < 1.0 || nota > 7.0) {
+        return res.status(400).json({ error: 'Nota inválida (debe estar entre 1.0 y 7.0)' });
+    }
+
+    try {
+        // 1. Consultar cuál era la nota ANTES de cambiarla
+        const notaAntiguaData = await queryAsync('SELECT nota FROM notas WHERE id_nota = ?', [id]);
+        const valorAnterior = notaAntiguaData.length > 0 ? notaAntiguaData[0].nota : null;
+
+        // 2. Actualizar la nota en la tabla principal
+        await queryAsync('UPDATE notas SET nota = ? WHERE id_nota = ?', [nota, id]);
+
+        // 3. Guardar el cambio en el historial (Solo si la nota realmente cambió)
+        // Convertimos a número para evitar que "5.0" y 5 sean vistos como distintos
+        if (valorAnterior === null || parseFloat(valorAnterior) !== parseFloat(nota)) {
+            await queryAsync(
+                'INSERT INTO historial_notas (id_nota, nota_anterior, nota_nueva, id_usuario) VALUES (?, ?, ?, ?)',
+                [id, valorAnterior, nota, id_usuario]
+            );
+        }
+
+        res.json({ mensaje: 'Nota actualizada correctamente', nota });
+    } catch (error) {
+        console.error('Error al actualizar nota y guardar historial:', error);
+        res.status(500).json({ error: 'Error interno al actualizar la nota' });
+    }
+});
+// Vista del historial (Solo Admin)
+app.get('/historial_notas', soloAdmin, (req, res) => {
+    res.render('contenedor_historial_notas', { 
+        nombre: req.session.nombre,
+        rol: req.session.rol
+    });
+});
+
+// API para obtener los datos del historial (Solo Admin)
+app.get('/api/historial_notas', soloAdmin, async (req, res) => {
+    try {
+        const sql = `
+           SELECT 
+    n.fecha AS fecha_del_cambio,
+    n.modificado_por,
+    a.rut AS rut_alumno,
+    a.nombres AS nombre_alumno,
+    a.apellido_paterno AS apellido_alumno,
+    c.grado,
+    c.nombre_curso AS letra_curso,
+    asig.nombre_asignatura,
+    d.nombre AS nombre_profesor,
+    d.apellido AS apellido_profesor,
+    n.evaluacion,
+    n.nota_anterior,
+    n.nota AS nota_nueva
+FROM notas n
+-- 1. Unimos para sacar los datos del alumno
+JOIN alumnos a ON n.id_alumno = a.id_alumno
+-- 2. Unimos con el curso del alumno para saber de qué sala es
+JOIN cursos c ON a.curso_id = c.id_curso
+-- 3. Unimos con la tabla puente para llegar al profe y la materia
+JOIN docente_asignatura da ON n.id_docente_asignatura = da.id_docente_asignatura
+-- 4. Sacamos el nombre del profesor
+JOIN docentes d ON da.id_docente = d.id_docente
+-- 5. Sacamos el nombre de la asignatura
+JOIN asignaturas asig ON da.id_asignatura = asig.id_asignatura
+-- Filtramos solo las que fueron modificadas y ordenamos por las más recientes
+WHERE n.modificado_por IS NOT NULL
+ORDER BY n.fecha DESC;
+        `;
+        const historial = await queryAsync(sql);
+        res.json(historial);
+    } catch (error) {
+        console.error('Error al obtener el historial de notas:', error);
+        res.status(500).json({ error: 'Error al obtener historial' });
+    }
+});
