@@ -332,7 +332,8 @@ function mostrarCalificaciones(datos) {
             }
         });
         
-        const promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : null;
+        let promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : null;
+        if (promedio === '3.9') promedio = '4.0'; // El salvavidas
         
         if (promedio !== null) {
             sumaTotal += parseFloat(promedio);
@@ -381,7 +382,8 @@ function mostrarCalificaciones(datos) {
     
     // Mostrar promedio general (solo de asignaturas filtradas)
     if (cantidadTotal > 0) {
-        const promedioFinal = (sumaTotal / cantidadTotal).toFixed(1);
+        let promedioFinal = (sumaTotal / cantidadTotal).toFixed(1);
+        if (promedioFinal === '3.9') promedioFinal = '4.0'; // El salvavidas
         promedioGeneral.textContent = promedioFinal;
         promedioGeneral.className = `promedio-badge ${getColorNota(promedioFinal)}`;
     } else {
@@ -393,6 +395,7 @@ function mostrarCalificaciones(datos) {
     btnDescargarPDF.disabled = false;
 }
 
+// Descargar PDF
 // Descargar PDF
 async function descargarPDF() {
     if (!datosActuales || datosActuales.length === 0) {
@@ -417,6 +420,7 @@ async function descargarPDF() {
         
         // Agrupar por asignatura (aplicando filtro)
         const asignaturas = {};
+        let maxNotas = 0; // Variable para saber cuántas columnas horizontales de notas necesitamos
         
         datosActuales.forEach(nota => {
             if (asignaturaFiltro && nota.nombre_asignatura !== asignaturaFiltro) {
@@ -430,13 +434,20 @@ async function descargarPDF() {
                 };
             }
             asignaturas[nota.nombre_asignatura].notas.push(nota);
+            
+            // Actualizamos el máximo de notas si esta asignatura tiene más
+            if (asignaturas[nota.nombre_asignatura].notas.length > maxNotas) {
+                maxNotas = asignaturas[nota.nombre_asignatura].notas.length;
+            }
         });
         
+        if (maxNotas === 0) maxNotas = 1; // Por si acaso no hay notas, dejar al menos una columna
+        
         // --- ENCABEZADO ---
-        doc.setFillColor(102, 126, 234);
+       doc.setFillColor(255, 255, 255);
         doc.rect(0, 0, 210, 40, 'F');
         
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(0, 0, 0);
         doc.setFontSize(22);
         doc.setFont(undefined, 'bold');
         doc.text('INFORME DE CALIFICACIONES', 105, 15, { align: 'center' });
@@ -479,7 +490,7 @@ async function descargarPDF() {
             doc.setFont(undefined, 'normal');
         }
         
-        // Calcular promedio
+        // Calcular promedio final
         let sumaTotal = 0;
         let cantidadTotal = 0;
         
@@ -501,92 +512,89 @@ async function descargarPDF() {
             }
         });
         
-        const promedioFinal = cantidadTotal > 0 ? (sumaTotal / cantidadTotal).toFixed(1) : '-';
+        let promedioFinal = cantidadTotal > 0 ? (sumaTotal / cantidadTotal).toFixed(1) : '-';
+        if (promedioFinal === '3.9') promedioFinal = '4.0'; // El salvavidas
         
         yPos += 6;
         doc.setFont(undefined, 'bold');
-        doc.text(`Promedio: ${promedioFinal}`, 14, yPos);
+        doc.text(`Promedio General: ${promedioFinal}`, 14, yPos);
         
         yPos += 12;
         
-        // --- CALIFICACIONES POR ASIGNATURA ---
+        // --- CALIFICACIONES (TABLA ÚNICA HORIZONTAL) ---
         doc.setFontSize(11);
         doc.text('DETALLE DE CALIFICACIONES', 14, yPos);
-        yPos += 8;
+        yPos += 5;
+        
+        // 1. Armar las cabeceras (Asignatura, N1, N2... Prom.)
+        const encabezados = ['Asignatura'];
+        for (let i = 1; i <= maxNotas; i++) {
+            encabezados.push(`N${i}`);
+        }
+        encabezados.push('Prom.');
+        
+        // 2. Armar las filas de la tabla
+        const tableData = [];
         
         Object.keys(asignaturas).sort().forEach((nombreAsig) => {
             const asig = asignaturas[nombreAsig];
+            // Agregamos el nombre de la asignatura y salto de línea para el profe
+            const fila = [`${nombreAsig}\n(Prof. ${asig.docente})`]; 
             
             let suma = 0;
             let cantidad = 0;
             
-            asig.notas.forEach(nota => {
-                if (nota.nota !== null) {
-                    suma += parseFloat(nota.nota);
-                    cantidad++;
+            // Llenar las notas de izquierda a derecha
+            for (let i = 0; i < maxNotas; i++) {
+                if (i < asig.notas.length) {
+                    const nota = asig.notas[i];
+                    if (nota.nota !== null) {
+                        const valorNota = parseFloat(nota.nota);
+                        suma += valorNota;
+                        cantidad++;
+                        fila.push(valorNota.toFixed(1));
+                    } else {
+                        fila.push('Pte.'); // Pendiente
+                    }
+                } else {
+                    fila.push('-'); // Celda vacía si la materia tiene menos notas que el máximo
                 }
-            });
-            
-            const promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : 'Sin notas';
-            
-            if (yPos > 250) {
-                doc.addPage();
-                yPos = 20;
             }
             
-            doc.setFillColor(102, 126, 234);
-            doc.rect(14, yPos - 5, 182, 8, 'F');
+            // Calcular y agregar el promedio al final de la fila
+            let promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : '-';
+            if (promedio === '3.9') promedio = '4.0'; // El salvavidas
+            fila.push(promedio);
             
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'bold');
-            doc.text(`${nombreAsig} - Profesor: ${asig.docente}`, 16, yPos);
-            doc.text(`Promedio: ${promedio}`, 190, yPos, { align: 'right' });
+            tableData.push(fila);
+        });
+        
+        // 3. Dibujar la tabla
+        doc.autoTable({
+            startY: yPos,
+            head: [encabezados],
+            body: tableData,
+            theme: 'striped',
             
-            yPos += 8;
-            
-            const tableData = asig.notas.map(nota => [
-                nota.evaluacion,
-                new Date(nota.fecha).toLocaleDateString('es-CL'),
-                nota.nota !== null ? parseFloat(nota.nota).toFixed(1) : 'Pendiente'
-            ]);
-            
-            doc.autoTable({
-                startY: yPos,
-                head: [['Evaluación', 'Fecha', 'Nota']],
-                body: tableData,
-                theme: 'striped',
-                headStyles: {
-                    fillColor: [118, 75, 162],
-                    fontSize: 9,
-                    fontStyle: 'bold'
-                },
-                bodyStyles: {
-                    fontSize: 9
-                },
-                columnStyles: {
-                    0: { cellWidth: 100 },
-                    1: { cellWidth: 40, halign: 'center' },
-                    2: { cellWidth: 30, halign: 'center', fontStyle: 'bold' }
-                },
-                margin: { left: 14, right: 14 },
-                didParseCell: function(data) {
-                    if (data.column.index === 2 && data.section === 'body') {
-                        const nota = parseFloat(data.cell.text[0]);
-                        if (!isNaN(nota)) {
-                            if (nota >= 5.5) {
-                                data.cell.styles.textColor = [40, 167, 69];
-                            } else if (nota >= 4.0) {
-                                data.cell.styles.textColor = [255, 193, 7];
-                            } else {
-                                data.cell.styles.textColor = [220, 53, 69];
-                            }
-                        }
-                    }
-                }
-            });
-            
-            yPos = doc.lastAutoTable.finalY + 10;
+            headStyles: {
+                fillColor: [255, 255, 255], // Morado institucional
+                fontSize: 9,
+                fontStyle: 'bold',
+                halign: 'center',
+                textColor: [0, 0, 0] // Blanco para encabezados
+            },
+            bodyStyles: {
+                fontSize: 9,
+                textColor: [0, 0, 0] // NEGRO PARA TODO (Eliminamos colores por nota)
+            },
+            columnStyles: {
+                0: { cellWidth: 70, halign: 'left', fontStyle: 'bold' } // La columna de Asignatura más ancha
+            },
+            styles: { 
+                halign: 'center', // Centrar todas las notas
+                valign: 'middle'  // Centrar verticalmente
+            },
+            margin: { left: 14, right: 14 }
         });
         
         // --- PIE DE PÁGINA ---

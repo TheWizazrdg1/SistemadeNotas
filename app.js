@@ -262,15 +262,18 @@ app.post('/guardar_asistencias', verificarSesion, async (req, res) => {
     }
 });
 // 4. Obtener el historial de asistencia de un curso
+// 4. Obtener el historial de asistencia de un curso (CON ASIGNATURA)
 app.get('/api/historial_asistencia/:id_curso', verificarSesion, async (req, res) => {
     try {
         const { id_curso } = req.params;
         
-        // Unimos asistencias con alumnos para tener el nombre y el estado
+        // Unimos asistencias con alumnos y asignaturas
         const sql = `
-            SELECT a.rut, a.nombres, a.apellido_paterno, a.apellido_materno, ast.fecha, ast.hora, ast.estado
+            SELECT a.rut, a.nombres, a.apellido_paterno, a.apellido_materno, 
+                   ast.fecha, ast.hora, ast.estado, asig.nombre_asignatura
             FROM asistencias ast
             JOIN alumnos a ON ast.id_alumno = a.id_alumno
+            LEFT JOIN asignaturas asig ON ast.id_asignatura = asig.id_asignatura
             WHERE a.curso_id = ?
             ORDER BY ast.fecha DESC, a.apellido_paterno ASC, a.nombres ASC
         `;
@@ -854,7 +857,7 @@ app.get('/calificaciones', verificarSesion, (req, res) => {
 });
 
 // API: Obtener calificaciones de un alumno específico
-app.get('/api/calificaciones/:id_alumno', async (req, res) => {
+app.get('/api/calificaciones/:id_alumno', verificarSesion, async (req, res) => {
     try {
         const { id_alumno } = req.params;
         
@@ -884,7 +887,7 @@ app.get('/api/calificaciones/:id_alumno', async (req, res) => {
 });
 
 // API: Obtener lista de todos los alumnos (para el filtro)
-app.get('/api/alumnos', async (req, res) => {
+app.get('/api/alumnos', verificarSesion, async (req, res) => {
     try {
         const sql = `
            SELECT 
@@ -925,34 +928,47 @@ app.get('/api/alumnos', async (req, res) => {
 // --- ENDPOINTS DE LA API ---
 
 // Obtener todos los alumnos con sus notas
-app.get('/api/notas', (req, res) => {
+// Obtener todos los alumnos con sus notas
+app.get('/api/notas',verificarSesion, (req, res) => {
     const { curso_id } = req.query;
     
     let query = `
-    SELECT DISTINCT
-            a.id_alumno, a.nombres, a.apellido_paterno, a.apellido_materno, a.rut,
-            c.nombre_curso, c.grado, c.id_curso,
-            asig.nombre_asignatura, n.evaluacion, n.nota, n.fecha, n.id_nota,
-            d.nombre AS nombre_docente, d.apellido AS apellido_docente
-         FROM alumnos a
+        SELECT DISTINCT
+            a.id_alumno,
+            a.nombres,
+            a.apellido_paterno,     
+            a.apellido_materno,
+            a.rut,
+            c.nombre_curso,
+            c.grado,
+            c.id_curso,
+            asig.nombre_asignatura,
+            n.evaluacion,
+            n.nota,
+            n.fecha,
+            n.id_nota,
+            n.nota_anterior,     /* <-- NUEVO: Historial */
+            n.modificado_por,    /* <-- NUEVO: Historial */
+            d.nombre AS nombre_docente,
+            d.apellido AS apellido_docente
+        FROM alumnos a
         LEFT JOIN cursos c ON a.curso_id = c.id_curso
         LEFT JOIN notas n ON a.id_alumno = n.id_alumno
         LEFT JOIN docente_asignatura da ON n.id_docente_asignatura = da.id_docente_asignatura
         LEFT JOIN asignaturas asig ON da.id_asignatura = asig.id_asignatura
-        LEFT JOIN docentes d ON da.id_docente = d.id_docente /* <-- NUEVO JOIN */
+        LEFT JOIN docentes d ON da.id_docente = d.id_docente
         WHERE n.id_nota IS NOT NULL 
         AND a.estado = 1
     `;
     
     const params = [];
     
-    // Agregar filtro por curso si se especifica
     if (curso_id) {
         query += ' AND a.curso_id = ?';
         params.push(curso_id);
     }
     
-    query += ' ORDER BY a.apellido_paterno, a.nombres, n.fecha';
+   query += ' ORDER BY a.apellido_paterno, a.nombres, n.fecha';
     
     oConexion.query(query, params, (error, resultados) => {
         if (error) {
@@ -964,7 +980,7 @@ app.get('/api/notas', (req, res) => {
 });
 
 // Obtener estructura de evaluaciones únicas
-app.get('/api/evaluaciones', (req, res) => {
+app.get('/api/evaluaciones', verificarSesion, (req, res) => {
     const query = `
         SELECT DISTINCT 
             n.evaluacion,
@@ -986,7 +1002,7 @@ app.get('/api/evaluaciones', (req, res) => {
 });
 
 // Obtener lista de cursos
-app.get('/api/cursos', (req, res) => {
+app.get('/api/cursos', verificarSesion, (req, res) => {
     const query = `
         SELECT DISTINCT id_curso, nombre_curso, grado, anio
         FROM cursos
@@ -1043,23 +1059,58 @@ app.get('/api/docentes', (req, res) => {
 // (Aquí sigue el endpoint PUT /api/notas/:id)
 
 // Actualizar una nota
-app.put('/api/notas/:id', (req, res) => {
+// Actualizar una nota individual y guardar el respaldo (Auditoría)
+app.put('/api/notas/:id', verificarSesion, async (req, res) => {
     const { id } = req.params;
     const { nota } = req.body;
     
-    if (!nota || nota < 1.0 || nota > 7.0) {
+    console.log(`\n--- GUARDANDO NOTA ID: ${id} ---`);
+
+    if (nota && (nota < 1.0 || nota > 7.0)) {
         return res.status(400).json({ error: 'Nota inválida (debe estar entre 1.0 y 7.0)' });
     }
     
-    const query = 'UPDATE notas SET nota = ? WHERE id_nota = ?';
-    
-    oConexion.query(query, [nota, id], (error, resultado) => {
-        if (error) {
-            console.error('Error al actualizar:', error);
-            return res.status(500).json({ error: 'Error al actualizar nota' });
+    try {
+        // 1. Identificar quién está haciendo el cambio (usamos el username o nombre guardado en sesión)
+        const usuarioModificador = (req.session && req.session.nombre) 
+            ? req.session.nombre 
+            : 'Profesor/Admin';
+
+        // 2. Consultar la nota que el alumno tenía ANTES de este cambio
+        const consultaPrevia = await queryAsync('SELECT nota FROM notas WHERE id_nota = ?', [id]);
+        
+        let notaAnterior = null;
+        if (consultaPrevia.length > 0) {
+            notaAnterior = consultaPrevia[0].nota;
         }
-        res.json({ mensaje: 'Nota actualizada correctamente', nota });
-    });
+
+        // 3. Limpiamos los valores para comparar de forma segura y evitar el error de los "Null"
+        const valorViejo = (notaAnterior !== null && notaAnterior !== '') ? parseFloat(notaAnterior) : null;
+        const valorNuevo = (nota !== null && nota !== '') ? parseFloat(nota) : null;
+
+        // 4. Verificamos que el profesor realmente haya cambiado el número
+        if (valorViejo !== valorNuevo) {
+            console.log(`📝 Cambio detectado: de ${valorViejo} a ${valorNuevo} por ${usuarioModificador}`);
+            
+            await queryAsync(`
+                UPDATE notas 
+                SET nota = ?, 
+                    nota_anterior = ?, 
+                    modificado_por = ?
+                WHERE id_nota = ?
+            `, [valorNuevo, valorViejo, usuarioModificador, id]);
+
+        } else {
+            console.log(`Igual: La nota es la misma (${valorNuevo}). Guardando sin gastar historial.`);
+            await queryAsync('UPDATE notas SET nota = ? WHERE id_nota = ?', [valorNuevo, id]);
+        }
+
+        res.json({ success: true, mensaje: 'Nota actualizada y respaldada correctamente', nota: valorNuevo });
+
+    } catch (error) {
+        console.error('❌ Error al actualizar la nota y su respaldo:', error);
+        res.status(500).json({ error: 'Error interno al actualizar la nota' });
+    }
 });
 
 // Crear nueva evaluación (columna)
@@ -1139,84 +1190,56 @@ app.post('/api/evaluaciones', async (req, res) => {
     }
 });
 
-// Actualizar evaluación (cambiar nombre, tipo o fecha)
-// Actualizar evaluación (cambiar nombre, tipo o fecha)
-// Actualizar evaluación (cambiar nombre, tipo o fecha)
-// --- EDITAR EVALUACIÓN (CON MIGRACIÓN SEGURA DE ASIGNATURA) ---
-app.put('/api/evaluaciones', async (req, res) => {
-    const { asignatura_vieja, evaluacion_vieja, fecha_vieja, asignatura_nueva, evaluacion_nueva, fecha_nueva } = req.body;
+
+app.put('/api/notas/:id', verificarSesion, async (req, res) => {
+    const { id } = req.params;
+    const { nota } = req.body;
     
-    if (!asignatura_vieja || !evaluacion_vieja || !fecha_vieja) {
-        return res.status(400).json({ error: 'Faltan datos originales para identificar la evaluación' });
-    }
+    console.log(`\n--- INICIANDO ACTUALIZACIÓN DE NOTA ---`);
+    console.log(`📍 1. ID Nota recibida desde la web: ${id}`);
+    console.log(`📍 2. Nueva nota tipeada por el profe: ${nota}`);
 
     try {
-        // 1. Buscar o crear ID de la asignatura NUEVA
-        let id_asignatura_nueva;
-        const resAsigNueva = await queryAsync('SELECT id_asignatura FROM asignaturas WHERE nombre_asignatura = ?', [asignatura_nueva]);
-        if (resAsigNueva.length > 0) {
-            id_asignatura_nueva = resAsigNueva[0].id_asignatura;
-        } else {
-            const insertAsig = await queryAsync('INSERT INTO asignaturas (nombre_asignatura, estado) VALUES (?, 1)', [asignatura_nueva]);
-            id_asignatura_nueva = insertAsig.insertId;
+        const usuarioModificador = (req.session && req.session.nombre) 
+            ? `${req.session.nombre} ${req.session.apellido}` 
+            : 'Profesor/Admin';
+        console.log(`📍 3. Usuario detectado: ${usuarioModificador}`);
+
+        const consultaPrevia = await queryAsync('SELECT nota FROM notas WHERE id_nota = ?', [id]);
+        console.log(`📍 4. Lo que encontró en la base de datos antes de cambiar:`, consultaPrevia);
+        
+        let notaAnterior = null;
+        if (consultaPrevia.length > 0) {
+            notaAnterior = consultaPrevia[0].nota;
         }
+        console.log(`📍 5. Nota anterior extraída limpia: ${notaAnterior}`);
 
-        // 2. Buscar las notas antiguas exactas que queremos cambiar (con su curso y profesor actual)
-        const notasAntiguas = await queryAsync(`
-            SELECT DISTINCT n.id_docente_asignatura, da.id_curso, da.id_docente
-            FROM notas n
-            JOIN docente_asignatura da ON n.id_docente_asignatura = da.id_docente_asignatura
-            JOIN asignaturas asig ON da.id_asignatura = asig.id_asignatura
-            WHERE asig.nombre_asignatura = ? AND n.evaluacion = ? AND DATE(n.fecha) = DATE(?)
-        `, [asignatura_vieja, evaluacion_vieja, fecha_vieja]);
+        const valorViejo = (notaAnterior !== null && notaAnterior !== '') ? parseFloat(notaAnterior) : null;
+        const valorNuevo = (nota !== null && nota !== '') ? parseFloat(nota) : null;
+        console.log(`📍 6. Comparación Matemática -> Viejo: ${valorViejo} | Nuevo: ${valorNuevo}`);
 
-        if (notasAntiguas.length === 0) {
-            return res.json({ mensaje: 'No se encontraron notas para actualizar', notas_actualizadas: 0 });
-        }
-
-        let totalActualizadas = 0;
-
-        // 3. MIGRACIÓN: Mover las notas a la nueva asignatura sin perder las calificaciones, el profesor ni el curso
-        for (const row of notasAntiguas) {
-            const id_curso = row.id_curso;
-            const id_docente = row.id_docente;
-            const old_da_id = row.id_docente_asignatura;
-
-            // Buscar o crear la nueva relación (Mismo Profesor + NUEVA Asignatura + Mismo Curso)
-            let new_da_id;
-            const resNuevaRel = await queryAsync(
-                'SELECT id_docente_asignatura FROM docente_asignatura WHERE id_asignatura = ? AND id_curso = ? AND id_docente = ?',
-                [id_asignatura_nueva, id_curso, id_docente]
-            );
-
-            if (resNuevaRel.length > 0) {
-                new_da_id = resNuevaRel[0].id_docente_asignatura;
-            } else {
-                const insertDA = await queryAsync(
-                    'INSERT INTO docente_asignatura (id_docente, id_asignatura, id_curso) VALUES (?, ?, ?)',
-                    [id_docente, id_asignatura_nueva, id_curso]
-                );
-                new_da_id = insertDA.insertId;
-            }
-
-            // Actualizar las notas en la base de datos para apuntar a la nueva relación
-            const updateResult = await queryAsync(`
+        if (valorViejo !== valorNuevo) {
+            console.log(`📍 7. ¡Son diferentes! Procediendo a guardar con RESPALDO...`);
+            const update = await queryAsync(`
                 UPDATE notas 
-                SET id_docente_asignatura = ?, evaluacion = ?, fecha = ? 
-                WHERE id_docente_asignatura = ? AND evaluacion = ? AND DATE(fecha) = DATE(?)
-            `, [new_da_id, evaluacion_nueva, fecha_nueva, old_da_id, evaluacion_vieja, fecha_vieja]);
-
-            totalActualizadas += updateResult.affectedRows;
+                SET nota = ?, 
+                    nota_anterior = ?, 
+                    modificado_por = ?
+                WHERE id_nota = ?
+            `, [valorNuevo, valorViejo, usuarioModificador, id]);
+            console.log(`📍 8. Éxito: ${update.affectedRows} fila(s) afectadas en la BD.`);
+        } else {
+            console.log(`📍 7. Las notas son IGUALES. Guardando normal, sin gastar respaldo.`);
+            const update = await queryAsync('UPDATE notas SET nota = ? WHERE id_nota = ?', [valorNuevo, id]);
+            console.log(`📍 8. Éxito simple: ${update.affectedRows} fila(s) afectadas.`);
         }
 
-        res.json({ 
-            mensaje: 'Evaluación y asignatura actualizadas correctamente', 
-            notas_actualizadas: totalActualizadas 
-        });
+        console.log(`--- FIN EXITOSO ---\n`);
+        res.json({ success: true, mensaje: 'Nota actualizada' });
 
     } catch (error) {
-        console.error('Error editando evaluación:', error);
-        res.status(500).json({ error: 'Error interno al editar la evaluación' });
+        console.error('\n❌ ERROR CRÍTICO AL GUARDAR:', error);
+        res.status(500).json({ error: 'Error interno al actualizar la nota' });
     }
 });
 

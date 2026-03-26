@@ -53,10 +53,17 @@
                 
             </div>
             
-            <div class="actions">
-                <button id="btnRecargar" class="btn-primary"> Recargar Datos</button>
-                <button id="btnNuevaEvaluacion" class="btn-success"> Nueva Evaluación</button>
-            </div>
+           <div class="actions">
+    <button id="btnRecargar" class="btn-primary"> Recargar Datos</button>
+    <button id="btnNuevaEvaluacion" class="btn-success"> Nueva Evaluación</button>
+    <!-- 
+    <% if (rol === 'admin') { %>
+        <button id="btnHistorialNotas" class="btn-warning" onclick="window.location.href='/historial_notas'">
+            Ver Historial de Cambios
+        </button>
+    <% } %>
+        -->
+</div>
             
             <div class="info">
                 <span id="totalAlumnos">Cargando...</span>
@@ -152,7 +159,10 @@
         </div>
     </div>
 </div>
-
+<script>
+    // Le pasamos el rol desde el servidor al navegador
+    const ROL_USUARIO = '<%= rol %>'; 
+</script>
     <script src="/Scripts/script.js"></script>
   
 </html>

@@ -72,14 +72,13 @@
             <form id="formAsistencia">
                 <table class="highlight striped responsive-table">
                     <thead>
-                        <tr>
-                            <th>N°</th>
-                            <th>Apellidos y Nombres</th>
-                            <th class="center-align">🟢 Presente</th>
-                            <th class="center-align">🔴 Ausente</th>
-                            <th class="center-align">🟡 Atrasado</th>
-                        </tr>
-                    </thead>
+    <tr>
+        <th>N°</th>
+        <th id="thAsignaturaTitulo">Apellidos y Nombres</th> <th class="center-align">🟢 Presente</th>
+        <th class="center-align">🔴 Ausente</th>
+        <th class="center-align">🟡 Atrasado</th>
+    </tr>
+</thead>
                     <tbody id="tablaBodyAlumnos">
                         </tbody>
                 </table>
@@ -122,9 +121,11 @@
                     <tr>
                         <th>Fecha</th>
                         <th>Hora</th>
+                         <th>Asignatura</th> 
                         <th>RUT</th>
                         <th>Alumno</th>
                         <th>Estado</th>
+                      
                     </tr>
                 </thead>
                 <tbody id="tablaBodyHistorial">
@@ -258,6 +259,9 @@
 
             loader.style.display = 'none';
             panelLista.style.display = 'block';
+            // Mostramos el nombre de la asignatura seleccionada en la cabecera de la tabla
+            const nombreAsigSeleccionada = selectAsignatura.options[selectAsignatura.selectedIndex].text;
+            document.getElementById('thAsignaturaTitulo').innerHTML = `Apellidos y Nombres <br><small class="purple-text text-darken-2" style="font-size: 0.85em;">📘 ${nombreAsigSeleccionada}</small>`;
 
         } catch (error) {
             console.error("Error cargando lista", error);
@@ -335,7 +339,7 @@
         document.getElementById('textoHistorialCurso').innerText = `Mostrando registros históricos de: ${nombreCurso}`;
         
         const tablaBodyHistorial = document.getElementById('tablaBodyHistorial');
-        tablaBodyHistorial.innerHTML = `<tr><td colspan="5" class="center-align">Cargando historial...</td></tr>`;
+        tablaBodyHistorial.innerHTML = `<tr><td colspan="6" class="center-align">Cargando historial...</td></tr>`;
 
         const modalInstance = M.Modal.getInstance(document.getElementById('modalHistorial'));
         modalInstance.open();
@@ -347,7 +351,7 @@
             tablaBodyHistorial.innerHTML = ''; 
 
             if (historial.length === 0) {
-                tablaBodyHistorial.innerHTML = `<tr><td colspan="5" class="center-align grey-text">No hay registros de asistencia para este curso.</td></tr>`;
+                tablaBodyHistorial.innerHTML = `<tr><td colspan="6" class="center-align grey-text">No hay registros de asistencia para este curso.</td></tr>`;
                 return;
             }
 
@@ -358,20 +362,23 @@
                 if (registro.estado === 'Ausente') colorEstado = 'red-text';
                 if (registro.estado === 'Atrasado') colorEstado = 'orange-text';
 
+                // Si viene null, significa que fue un atraso registrado por inspectoría en portería
+                const nombreAsig = registro.nombre_asignatura ? registro.nombre_asignatura : 'General (Portería)';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="font-weight: bold;">${fechaBonita}</td>
                     <td>${registro.hora}</td>
-                    <td class="grey-text">${registro.rut}</td>
+                    <td><span class="chip">${nombreAsig}</span></td> <td class="grey-text">${registro.rut}</td>
                     <td>${registro.apellido_paterno} ${registro.apellido_materno || ''}, ${registro.nombres}</td>
-                    <td class="${colorEstado} style="font-weight: bold;">${registro.estado}</td>
+                    <td class="${colorEstado}" style="font-weight: bold;">${registro.estado}</td>
                 `;
                 tablaBodyHistorial.appendChild(tr);
             });
 
         } catch (error) {
             console.error("Error al cargar historial:", error);
-            tablaBodyHistorial.innerHTML = `<tr><td colspan="5" class="center-align red-text">Error al cargar los datos.</td></tr>`;
+            tablaBodyHistorial.innerHTML = `<tr><td colspan="6" class="center-align red-text">Error al cargar los datos.</td></tr>`;
         }
     });
 
@@ -399,11 +406,13 @@
 
             const datosExcel = historial.map((registro, index) => {
                 const fechaBonita = new Date(registro.fecha).toLocaleDateString('es-CL', { timeZone: 'UTC' });
+                const nombreAsig = registro.nombre_asignatura ? registro.nombre_asignatura : 'General (Portería)';
                 
                 return {
                     "N°": index + 1,
                     "Fecha": fechaBonita,
                     "Hora": registro.hora,
+                    "Asignatura": nombreAsig, // <-- AGREGAMOS ASIGNATURA AL EXCEL
                     "RUT": registro.rut,
                     "Alumno": `${registro.apellido_paterno} ${registro.apellido_materno || ''}, ${registro.nombres}`,
                     "Estado Asistencia": registro.estado
@@ -416,6 +425,7 @@
                 { wch: 5 },  
                 { wch: 12 }, 
                 { wch: 10 }, 
+                { wch: 25 }, // <-- ANCHO PARA LA COLUMNA ASIGNATURA
                 { wch: 15 }, 
                 { wch: 40 }, 
                 { wch: 20 }  
