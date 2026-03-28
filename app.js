@@ -752,19 +752,27 @@ app.get('/borrar_profesor/:id', verificarSesion, async (req, res) => {
 // ==========================================
 
 // 1. Mostrar la vista de cursos (Solo los activos)
+// 1. Mostrar la vista de cursos (Solo los activos)
 app.get('/cursos', verificarSesion, async (req, res) => {
     try {
-        // Traemos solo los cursos con estado = 1 (activos) y los ordenamos
-        const sql = `
-            SELECT * FROM cursos 
-            WHERE estado = 1 
-            ORDER BY grado ASC, nombre_curso ASC
+        // Traemos los cursos ACTIVOS unidos con el nombre del profesor
+        const sqlCursos = `
+            SELECT c.*, d.nombre AS nombre_profesor, d.apellido AS apellido_profesor 
+            FROM cursos c
+            LEFT JOIN docentes d ON c.id_docente = d.id_docente
+            WHERE c.estado = 1 
+            ORDER BY c.grado ASC, c.nombre_curso ASC
         `;
-        const cursos = await queryAsync(sql);
+        const cursos = await queryAsync(sqlCursos);
+
+        // Traemos la lista de profesores ACTIVOS para los <select>
+        const sqlDocentes = `SELECT id_docente, nombre, apellido FROM docentes WHERE estado = 1 ORDER BY apellido ASC`;
+        const docentes = await queryAsync(sqlDocentes);
 
         res.render('contenedor_curso', { 
             nombre: req.session.nombre,
-            cursos: cursos 
+            cursos: cursos,
+            docentes: docentes // <--- Pasamos los profesores a la vista
         });
     } catch (error) {
         console.error('Error al cargar cursos:', error);
@@ -773,23 +781,23 @@ app.get('/cursos', verificarSesion, async (req, res) => {
 });
 
 // 2. Crear un nuevo curso
+// 2. Crear un nuevo curso
 app.post('/crear_curso', verificarSesion, async (req, res) => {
     try {
-        // Extraemos los datos del formulario
-        const { grado, nombre_curso, anio } = req.body;
+        // Extraemos los datos del formulario (¡Ahora incluimos id_docente!)
+        const { grado, nombre_curso, anio, id_docente } = req.body;
 
-        // Validamos que vengan los datos
-        if (!grado || !nombre_curso || !anio) {
-            return res.send('Faltan datos para crear el curso');
+        // Validamos que vengan todos los datos
+        if (!grado || !nombre_curso || !anio || !id_docente) {
+            return res.send('Faltan datos para crear el curso, asegúrate de elegir un profesor.');
         }
 
-        // Insertamos por defecto con estado = 1
-        const sql = 'INSERT INTO cursos (grado, nombre_curso, anio, estado) VALUES (?, ?, ?, 1)';
+        // Insertamos incluyendo el id_docente
+        const sql = 'INSERT INTO cursos (grado, nombre_curso, anio, estado, id_docente) VALUES (?, ?, ?, 1, ?)';
         
-        // Convertimos la letra a mayúscula por seguridad (ej: 'a' -> 'A')
-        await queryAsync(sql, [grado, nombre_curso.toUpperCase(), anio]);
+        await queryAsync(sql, [grado, nombre_curso.toUpperCase(), anio, id_docente]);
 
-        console.log(`Nuevo curso creado: ${grado}° ${nombre_curso.toUpperCase()} - Año ${anio}`);
+        console.log(`Nuevo curso creado: ${grado}° ${nombre_curso.toUpperCase()} - Año ${anio} - Profe ID: ${id_docente}`);
         res.redirect('/cursos');
 
     } catch (error) {
@@ -799,23 +807,27 @@ app.post('/crear_curso', verificarSesion, async (req, res) => {
 });
 
 // 3. Editar un curso existente
+// 3. Editar un curso existente
 app.post('/editar_curso', verificarSesion, async (req, res) => {
     try {
-        const { id_curso, grado, nombre_curso, anio } = req.body;
+        // Ahora recibimos también el id_docente
+        const { id_curso, grado, nombre_curso, anio, id_docente } = req.body;
 
-        if (!id_curso || !grado || !nombre_curso || !anio) {
+        if (!id_curso || !grado || !nombre_curso || !anio || !id_docente) {
             return res.send('Faltan datos para editar el curso');
         }
 
+        // Actualizamos la tabla incluyendo el nuevo profesor
         const sql = `
             UPDATE cursos 
-            SET grado = ?, nombre_curso = ?, anio = ? 
+            SET grado = ?, nombre_curso = ?, anio = ?, id_docente = ? 
             WHERE id_curso = ?
         `;
 
-        await queryAsync(sql, [grado, nombre_curso.toUpperCase(), anio, id_curso]);
+        // El orden aquí es súper importante, debe coincidir con los "?" de arriba
+        await queryAsync(sql, [grado, nombre_curso.toUpperCase(), anio, id_docente, id_curso]);
 
-        console.log(`Curso actualizado ID: ${id_curso}`);
+        console.log(`Curso actualizado ID: ${id_curso} con Profe ID: ${id_docente}`);
         res.redirect('/cursos');
 
     } catch (error) {

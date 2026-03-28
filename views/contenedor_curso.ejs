@@ -44,28 +44,43 @@
         </div>
     </nav>
 
-    <div class="container" style="margin-top: 20px; width: 95%; max-width: 1200px;">
+    <div class="container" style="margin-top: 20px; width: 95%; max-width: 1300px;">
         
         <div class="card-panel">
             <h5 class="center-align" style="color: #495057; font-weight: 600;">➕ Registrar Nuevo Curso</h5>
             <form action="/crear_curso" method="POST" class="row" style="margin-bottom: 0;">
                 
-                <div class="input-field col s12 m3">
+                <div class="input-field col s6 m2">
                     <i class="material-icons prefix">format_list_numbered</i>
                     <input id="grado" name="grado" type="number" min="1" max="12" class="validate" required>
-                    <label for="grado">Grado (Ej: 1, 2, 3)</label>
+                    <label for="grado">Grado (Ej: 1)</label>
                 </div>
 
-                <div class="input-field col s12 m3">
+                <div class="input-field col s6 m2">
                     <i class="material-icons prefix">font_download</i>
                     <input id="nombre_curso" name="nombre_curso" type="text" maxlength="1" style="text-transform: uppercase;" class="validate" required>
-                    <label for="nombre_curso">Letra (Ej: A, B)</label>
+                    <label for="nombre_curso">Letra (Ej: A)</label>
                 </div>
 
-                <div class="input-field col s12 m3">
+                <div class="input-field col s12 m2">
                     <i class="material-icons prefix">date_range</i>
                     <input id="anio" name="anio" type="number" min="2020" max="2100" class="validate" required>
                     <label for="anio">Año (Ej: 2024)</label>
+                </div>
+
+                <div class="input-field col s12 m3">
+                    <i class="material-icons prefix">person</i>
+                    <select name="id_docente" required>
+                        <option value="" disabled selected>Selecciona Profesor</option>
+                        <% if (docentes && docentes.length > 0) { %>
+                            <% docentes.forEach(d => { %>
+                                <option value="<%= d.id_docente %>"><%= d.nombre %> <%= d.apellido %></option>
+                            <% }) %>
+                        <% } else { %>
+                            <option value="" disabled>No hay profesores activos</option>
+                        <% } %>
+                    </select>
+                    <label>Profesor Jefe</label>
                 </div>
 
                 <div class="input-field col s12 m3 center-align">
@@ -93,7 +108,7 @@
                         <th>Grado</th>
                         <th>Letra</th>
                         <th>Año</th>
-                        <th>Acciones</th>
+                        <th>Profesor Jefe</th> <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -105,9 +120,16 @@
                             <td style="font-weight: bold; font-size: 1.1em;"><%= c.nombre_curso %></td>
                             <td><%= c.anio %></td>
                             <td>
+                                <% if(c.nombre_profesor) { %>
+                                    <span class="blue-text text-darken-2"><i class="material-icons tiny">person</i> <%= c.nombre_profesor %> <%= c.apellido_profesor %></span>
+                                <% } else { %>
+                                    <span class="grey-text"><i>Sin asignar</i></span>
+                                <% } %>
+                            </td>
+                            <td>
                                 <a href="#modalEdicionCurso" 
                                    class="btn-small amber darken-2 modal-trigger waves-effect waves-light" 
-                                   onclick="cargarCurso('<%= c.id_curso %>', '<%= c.grado %>', '<%= c.nombre_curso %>', '<%= c.anio %>')">
+                                   onclick="cargarCurso('<%= c.id_curso %>', '<%= c.grado %>', '<%= c.nombre_curso %>', '<%= c.anio %>', '<%= c.id_docente %>')">
                                    <i class="material-icons">edit</i>
                                 </a>
                                 <a href="/borrar_curso/<%= c.id_curso %>" 
@@ -120,7 +142,7 @@
                         <% }) %>
                     <% } else { %>
                         <tr>
-                            <td colspan="5" class="grey-text center-align" style="padding: 20px;">
+                            <td colspan="6" class="grey-text center-align" style="padding: 20px;">
                                 No hay cursos registrados en el sistema.
                             </td>
                         </tr>
@@ -131,27 +153,41 @@
 
     </div>
 
-    <div id="modalEdicionCurso" class="modal" style="max-width: 500px; border-radius: 8px;">
+    <div id="modalEdicionCurso" class="modal" style="max-width: 600px; border-radius: 8px;">
         <form action="/editar_curso" method="POST">
             <div class="modal-content">
                 <h4>✏️ Editar Curso</h4>
                 <div class="row" style="margin-top: 20px;">
                     <input type="hidden" name="id_curso" id="id_curso_editar">
 
-                    <div class="input-field col s12 m6">
+                    <div class="input-field col s12 m4">
                         <input id="grado_editar" name="grado" type="number" min="1" max="12" class="validate" required>
                         <label for="grado_editar">Grado</label>
                     </div>
 
-                    <div class="input-field col s12 m6">
+                    <div class="input-field col s12 m4">
                         <input id="letra_editar" name="nombre_curso" type="text" maxlength="1" style="text-transform: uppercase;" class="validate" required>
                         <label for="letra_editar">Letra</label>
                     </div>
 
-                    <div class="input-field col s12">
+                    <div class="input-field col s12 m4">
                         <input id="anio_editar" name="anio" type="number" min="2020" max="2100" class="validate" required>
                         <label for="anio_editar">Año</label>
                     </div>
+
+                    <div class="input-field col s12">
+                        <i class="material-icons prefix">person</i>
+                        <select name="id_docente" id="docente_editar" required>
+                            <option value="" disabled selected>Selecciona Profesor</option>
+                            <% if (docentes && docentes.length > 0) { %>
+                                <% docentes.forEach(d => { %>
+                                    <option value="<%= d.id_docente %>"><%= d.nombre %> <%= d.apellido %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                        <label>Profesor Jefe</label>
+                    </div>
+
                 </div>
             </div>
             
@@ -169,35 +205,39 @@
             M.AutoInit();
         });
 
-        // Función para cargar los datos en el Modal
-        function cargarCurso(id, grado, letra, anio) {
+        // Función ACTUALIZADA para cargar los datos en el Modal incluyendo el Profesor
+        function cargarCurso(id, grado, letra, anio, id_docente) {
             document.getElementById('id_curso_editar').value = id;
             document.getElementById('grado_editar').value = grado;
             document.getElementById('letra_editar').value = letra;
             document.getElementById('anio_editar').value = anio;
+            
+            // Asignar el profesor en el select
+            const selectDocente = document.getElementById('docente_editar');
+            selectDocente.value = id_docente;
 
-            // Actualizar las etiquetas para que no se monten sobre el texto
+            // Actualizar elementos de Materialize
             M.updateTextFields();
+            M.FormSelect.init(selectDocente); // Esto es CLAVE para que Materialize actualice visualmente el <select>
         }
 
         // Script del Buscador en tiempo real
         const inputBusqueda = document.getElementById('buscador_cursos');
         if (inputBusqueda) {
             inputBusqueda.addEventListener('keyup', function() {
-                const texto = this.value.toLowerCase().replace(/\s/g, ''); // Quitamos espacios para buscar "1A" o "1 A" igual
+                const texto = this.value.toLowerCase().replace(/\s/g, ''); 
                 const filas = document.querySelectorAll('table tbody tr');
                 
                 filas.forEach(fila => {
-                    // Evitamos filtrar la fila de "No hay cursos"
                     if(fila.cells.length === 1) return; 
 
                     const grado = fila.cells[1].textContent.toLowerCase().replace('°', '');
                     const letra = fila.cells[2].textContent.toLowerCase();
                     const anio = fila.cells[3].textContent.toLowerCase();
+                    const profe = fila.cells[4].textContent.toLowerCase().replace(/\s/g, ''); // Nuevo: buscar por profe
                     
-                    // Comprobamos si el texto buscado coincide con la combinación de grado+letra o el año
                     const combo = grado + letra; 
-                    if (combo.includes(texto) || anio.includes(texto) || grado.includes(texto) || letra.includes(texto)) {
+                    if (combo.includes(texto) || anio.includes(texto) || grado.includes(texto) || letra.includes(texto) || profe.includes(texto)) {
                         fila.style.display = ''; 
                     } else {
                         fila.style.display = 'none'; 
