@@ -1,6 +1,6 @@
 const API_URL = `${window.location.origin}/api`;
 
-// Elementos del DOM
+// Elementos del DOM (Filtros Principales)
 const filtroCurso = document.getElementById('filtroCurso');
 const filtroLetra = document.getElementById('filtroLetra');
 const filtroAlumno = document.getElementById('filtroAlumno');
@@ -9,32 +9,32 @@ const inputBuscarRut = document.getElementById('inputBuscarRut');
 const btnBuscarRut = document.getElementById('btnBuscarRut');
 const sugerenciasRut = document.getElementById('sugerenciasRut');
 const btnLimpiar = document.getElementById('btnLimpiar');
+
+// Elementos del DOM (Modal de Filtros)
+const filtroModalCurso = document.getElementById('filtroModalCurso');
+const filtroModalLetra = document.getElementById('filtroModalLetra');
+const buscadorModalAlumno = document.getElementById('buscadorModalAlumno');
+const selectModalAlumno = document.getElementById('modalAlumno');
+
+// Elementos Generales
 const btnCerrarSesion = document.getElementById('btnCerrarSesion');
 const btnNuevaAnotacion = document.getElementById('btnNuevaAnotacion');
 const contenedorAnotaciones = document.getElementById('contenedorAnotaciones');
-// Al inicio del archivo, junto a statPositivas
-const statInformativas = document.getElementById('statInformativas');
-// Info del alumno
+
+// Info del alumno y Estadísticas
 const infoAlumno = document.getElementById('infoAlumno');
 const alumnoNombre = document.getElementById('alumnoNombre');
 const alumnoRut = document.getElementById('alumnoRut');
 const alumnoCurso = document.getElementById('alumnoCurso');
 const statPositivas = document.getElementById('statPositivas');
 const statNegativas = document.getElementById('statNegativas');
+const statInformativas = document.getElementById('statInformativas');
 
 // Modales
 const modalNuevaAnotacion = document.getElementById('modalNuevaAnotacion');
 const modalEditarAnotacion = document.getElementById('modalEditarAnotacion');
 const closeModalNueva = document.getElementById('closeModalNueva');
 const closeModalEditar = document.getElementById('closeModalEditar');
-
-closeModalEditar.addEventListener("click", () =>{
-    modalEditarAnotacion.style.display = "none";
-
-})
-closeModalNueva.addEventListener("click",()=>{
-    modalNuevaAnotacion.style.display = "none";
-})
 
 // Variables globales
 let todosLosAlumnos = [];
@@ -51,37 +51,34 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarAnotaciones();
 });
 
-// Event Listeners
-//filtroCurso.addEventListener('change', aplicarFiltrosAlumnos);
-//filtroLetra.addEventListener('change', aplicarFiltrosAlumnos);
-//filtroAlumno.addEventListener('change', seleccionarAlumnoPorSelect);
-//filtroTipo.addEventListener('change', cargarAnotaciones);
-//btnLimpiar.addEventListener('click', limpiarFiltros);
-//btnCerrarSesion.addEventListener('click', cerrarSesion);
-btnNuevaAnotacion.addEventListener('click', abrirModalNueva);
-//btnBuscarRut.addEventListener('click', buscarPorRutDirecto);
-//inputBuscarRut.addEventListener('keypress', (e) => {
-  //  if (e.key === 'Enter') {
-    //    e.preventDefault();
-      //  buscarPorRutDirecto();
-   // }
-//});
-// ==========================================
-// EVENT LISTENERS CORREGIDOS
-// ==========================================
+// Event Listeners - Modales
+closeModalEditar.addEventListener("click", () => {
+    modalEditarAnotacion.style.display = "none";
+});
 
-// 1. Cuando cambia el Curso
+closeModalNueva.addEventListener("click", () => {
+    modalNuevaAnotacion.style.display = "none";
+});
+
+// Event Listeners - Filtros del Modal
+filtroModalCurso.addEventListener('change', filtrarAlumnosModal);
+filtroModalLetra.addEventListener('change', filtrarAlumnosModal);
+buscadorModalAlumno.addEventListener('input', filtrarAlumnosModal);
+
+// Event Listeners - Botones Principales
+btnNuevaAnotacion.addEventListener('click', abrirModalNueva);
+btnCerrarSesion.addEventListener('click', cerrarSesion);
+btnLimpiar.addEventListener('click', limpiarFiltros);
+filtroTipo.addEventListener('change', cargarAnotaciones);
+
+// Event Listeners - Filtros Principales
 filtroCurso.addEventListener('change', () => {
-    // OPCIONAL: Descomenta la siguiente línea si quieres que al cambiar de curso se reinicie la letra
-    // filtroLetra.value = ""; 
-    
     aplicarFiltrosAlumnos();      
-    filtroAlumno.value = "";      // Reseteamos el alumno seleccionado
-    infoAlumno.style.display = 'none'; // Ocultamos la ficha
+    filtroAlumno.value = "";      
+    infoAlumno.style.display = 'none'; 
     contenedorAnotaciones.innerHTML = '<div class="no-data"><p>👆 Selecciona un alumno</p></div>';
 });
 
-// 2. Cuando cambia la Letra
 filtroLetra.addEventListener('change', () => {
     aplicarFiltrosAlumnos();
     filtroAlumno.value = "";
@@ -89,110 +86,18 @@ filtroLetra.addEventListener('change', () => {
     contenedorAnotaciones.innerHTML = '<div class="no-data"><p>👆 Selecciona un alumno</p></div>';
 });
 
-// 3. Cuando se elige un alumno del select
 filtroAlumno.addEventListener('change', seleccionarAlumnoPorSelect);
-
-// 4. Botón Limpiar
-btnLimpiar.addEventListener('click', limpiarFiltros);
-
-// 5. Filtro por Tipo de anotación
-filtroTipo.addEventListener('change', cargarAnotaciones);
 
 document.getElementById('btnGuardarAnotacion').addEventListener('click', guardarNuevaAnotacion);
 document.getElementById('btnActualizarAnotacion').addEventListener('click', actualizarAnotacion);
 document.getElementById('btnEliminarAnotacion').addEventListener('click', eliminarAnotacion);
 
-// ===== BÚSQUEDA POR RUT =====
-function buscarPorRutDirecto() {
-    console.log('🔍 Iniciando búsqueda por RUT...');
-    
-    const rutIngresado = inputBuscarRut.value.trim();
-    
-    if (rutIngresado.length === 0) {
-        mostrarMensaje('Por favor ingresa un RUT', 'warning');
-        inputBuscarRut.focus();
-        return;
-    }
-    
-    if (!window.RutValidator) {
-        mostrarMensaje('Error: Sistema de validación no disponible', 'error');
-        return;
-    }
-    
-    const esValido = window.RutValidator.validar(rutIngresado);
-    
-    if (!esValido) {
-        mostrarMensaje('❌ El RUT ingresado no es válido', 'error');
-        inputBuscarRut.classList.add('rut-invalido');
-        inputBuscarRut.classList.remove('rut-valido');
-        return;
-    }
-    
-    inputBuscarRut.classList.remove('rut-invalido');
-    inputBuscarRut.classList.add('rut-valido');
-    
-    const rutLimpio = window.RutValidator.limpiar(rutIngresado);
-    
-    const alumnoEncontrado = todosLosAlumnos.find(alumno => {
-        const rutAlumnoLimpio = window.RutValidator.limpiar(alumno.rut);
-        return rutAlumnoLimpio === rutLimpio;
-    });
-    
-    if (!alumnoEncontrado) {
-        mostrarMensaje('❌ No se encontró ningún alumno con ese RUT', 'error');
-        sugerenciasRut.innerHTML = `
-            <div class="sugerencia-item no-resultados">
-                No se encontró alumno con RUT: ${window.RutValidator.formatear(rutIngresado)}
-            </div>
-        `;
-        sugerenciasRut.style.display = 'block';
-        return;
-    }
-    
-    seleccionarAlumnoPorRut(alumnoEncontrado);
-    mostrarMensaje(`✅ Alumno encontrado: ${alumnoEncontrado.nombres} ${alumnoEncontrado.apellido_paterno}`, 'success');
+if (btnBuscarRut) {
+    btnBuscarRut.addEventListener('click', buscarPorRutDirecto);
 }
 
-function seleccionarAlumnoPorRut(alumno) {
-    if (window.RutValidator) {
-        inputBuscarRut.value = window.RutValidator.formatear(alumno.rut);
-        inputBuscarRut.classList.add('rut-valido');
-    }
-    
-    if (alumno.grado) {
-        filtroCurso.value = alumno.grado;
-        aplicarFiltrosAlumnos();
-    }
-    
-    if (alumno.nombre_curso) {
-        filtroLetra.value = alumno.nombre_curso;
-        aplicarFiltrosAlumnos();
-    }
-    
-    filtroAlumno.value = alumno.id_alumno;
-    
-    if (sugerenciasRut) {
-        sugerenciasRut.style.display = 'none';
-    }
-    
-    seleccionarAlumnoPorSelect();
-}
 
-function inicializarBuscadorRut() {
-    if (window.RutValidator && window.RutValidator.BuscadorRut && inputBuscarRut && sugerenciasRut) {
-        buscadorRut = new window.RutValidator.BuscadorRut({
-            inputElement: inputBuscarRut,
-            sugerenciasElement: sugerenciasRut,
-            alumnos: todosLosAlumnos,
-            onSelect: seleccionarAlumnoPorRut,
-            minCaracteres: 2,
-            validarFormato: true
-        });
-    }
-}
-
-// ===== CARGAR DATOS =====
-// En anotaciones.js
+// ===== CARGA INICIAL DE DATOS =====
 
 async function cargarCursos() {
     try {
@@ -201,7 +106,6 @@ async function cargarCursos() {
         
         const cursos = await response.json();
         
-        // Usamos Sets para evitar duplicados (ej: varios 1° Medios)
         const grados = new Set();
         const letras = new Set();
         
@@ -210,22 +114,16 @@ async function cargarCursos() {
             if (curso.nombre_curso) letras.add(curso.nombre_curso);
         });
         
-        // Llenar select de Cursos (Grados)
+        // Llenar select de Cursos Principal
         filtroCurso.innerHTML = '<option value="">Todos los cursos</option>';
         Array.from(grados).sort((a, b) => a - b).forEach(grado => {
-            const option = document.createElement('option');
-            option.value = grado;
-            option.textContent = `${grado}° Medio`;
-            filtroCurso.appendChild(option);
+            filtroCurso.innerHTML += `<option value="${grado}">${grado}° Medio</option>`;
         });
         
-        // Llenar select de Letras
+        // Llenar select de Letras Principal
         filtroLetra.innerHTML = '<option value="">Todas</option>';
         Array.from(letras).sort().forEach(letra => {
-            const option = document.createElement('option');
-            option.value = letra;
-            option.textContent = letra;
-            filtroLetra.appendChild(option);
+            filtroLetra.innerHTML += `<option value="${letra}">${letra}</option>`;
         });
 
     } catch (error) {
@@ -239,20 +137,21 @@ async function cargarAlumnos() {
         if (!response.ok) throw new Error('Error al cargar alumnos');
         
         todosLosAlumnos = await response.json();
-        aplicarFiltrosAlumnos();
-        inicializarBuscadorRut();
         
-        // Llenar select del modal
-        const modalAlumno = document.getElementById('modalAlumno');
-        modalAlumno.innerHTML = '<option value="">Seleccionar alumno...</option>';
-        todosLosAlumnos.forEach(alumno => {
-            const option = document.createElement('option');
-            option.value = alumno.id_alumno;
-            option.textContent = `${alumno.nombres} ${alumno.apellido_paterno} ${alumno.apellido_materno || ''} - ${alumno.rut}`;
-            modalAlumno.appendChild(option);
-        });
+        // Inicializar el buscador de RUT
+        inicializarBuscadorRut();
+
+        // Aplicamos los filtros principales a la pantalla de fondo
+        aplicarFiltrosAlumnos();
+        
+        // Llenamos los mini-filtros de curso y letra dentro del Modal
+        llenarFiltrosModal(todosLosAlumnos);
+
+        // Llenamos la lista del selector grande dentro del modal
+        filtrarAlumnosModal(); 
+        
     } catch (error) {
-        console.error('Error al cargar alumnos:', error);
+        console.error('Error:', error);
         mostrarError('Error al cargar la lista de alumnos');
     }
 }
@@ -264,7 +163,6 @@ async function cargarDocentes() {
         
         todosLosDocentes = await response.json();
         
-        // Llenar select del modal
         const modalDocente = document.getElementById('modalDocente');
         modalDocente.innerHTML = '<option value="">Seleccionar docente...</option>';
         todosLosDocentes.forEach(docente => {
@@ -303,7 +201,6 @@ async function cargarAnotaciones() {
         todasLasAnotaciones = await response.json();
         mostrarAnotaciones(todasLasAnotaciones);
         
-        // Si hay alumno seleccionado, cargar estadísticas
         if (alumnoSeleccionado) {
             await cargarEstadisticas(alumnoSeleccionado.id_alumno);
         }
@@ -327,62 +224,39 @@ async function cargarEstadisticas(idAlumno) {
     }
 }
 
-// En anotaciones.js
+
+// ===== FILTROS Y SELECTORES (PANTALLA PRINCIPAL) =====
 
 function aplicarFiltrosAlumnos() {
-    console.log("🔄 Aplicando filtros...");
-    
-    // 1. Obtener valores y limpiarlos (trim elimina espacios accidentales)
     const gradoSeleccionado = filtroCurso.value;
     const letraSeleccionada = filtroLetra.value;
     
-    console.log(`Filtros activos -> Grado: "${gradoSeleccionado}" | Letra: "${letraSeleccionada}"`);
-
-    // 2. Filtrar la lista maestra
     let alumnosFiltrados = todosLosAlumnos.filter(alumno => {
-        // A) Validar Grado
-        // Convertimos ambos a String para comparar "1" con 1 sin problemas
         let coincideGrado = true;
         if (gradoSeleccionado !== "") {
-            // Si el alumno no tiene grado, no coincide. Si tiene, comparamos texto.
-            if (!alumno.grado) {
-                coincideGrado = false;
-            } else {
-                coincideGrado = String(alumno.grado) === String(gradoSeleccionado);
-            }
+            if (!alumno.grado) coincideGrado = false;
+            else coincideGrado = String(alumno.grado) === String(gradoSeleccionado);
         }
 
-        // B) Validar Letra (Curso)
         let coincideLetra = true;
         if (letraSeleccionada !== "") {
-            if (!alumno.nombre_curso) {
-                coincideLetra = false;
-            } else {
-                // Comparamos ignorando mayúsculas y espacios
-                coincideLetra = String(alumno.nombre_curso).trim().toUpperCase() === String(letraSeleccionada).trim().toUpperCase();
-            }
+            if (!alumno.nombre_curso) coincideLetra = false;
+            else coincideLetra = String(alumno.nombre_curso).trim().toUpperCase() === String(letraSeleccionada).trim().toUpperCase();
         }
         
         return coincideGrado && coincideLetra;
     });
     
-    console.log(`Alumnos encontrados: ${alumnosFiltrados.length}`);
-
-    // 3. Rellenar el select de Alumnos
     filtroAlumno.innerHTML = '<option value="">Todos los alumnos</option>';
     
     if (alumnosFiltrados.length > 0) {
-        // Ordenar alfabéticamente
         alumnosFiltrados.sort((a, b) => a.apellido_paterno.localeCompare(b.apellido_paterno));
 
         alumnosFiltrados.forEach(alumno => {
             const option = document.createElement('option');
             option.value = alumno.id_alumno;
-            
-            // Texto informativo: Apellido Nombre (Curso)
             const textoCurso = alumno.grado ? ` (${alumno.grado}° ${alumno.nombre_curso})` : ' (Sin curso)';
             option.textContent = `${alumno.apellido_paterno} ${alumno.apellido_materno || ''}, ${alumno.nombres}${textoCurso}`;
-            
             filtroAlumno.appendChild(option);
         });
     } else {
@@ -391,7 +265,6 @@ function aplicarFiltrosAlumnos() {
         filtroAlumno.appendChild(option);
     }
     
-    // 4. Actualizar el buscador de RUT auxiliar
     if (buscadorRut) {
         buscadorRut.actualizarAlumnos(alumnosFiltrados);
     }
@@ -423,6 +296,60 @@ function seleccionarAlumnoPorSelect() {
     cargarAnotaciones();
 }
 
+
+// ===== FILTROS Y SELECTORES (DENTRO DEL MODAL) =====
+
+function llenarFiltrosModal(alumnos) {
+    const grados = new Set();
+    const letras = new Set();
+    
+    alumnos.forEach(a => {
+        if (a.grado) grados.add(a.grado);
+        if (a.nombre_curso) letras.add(a.nombre_curso);
+    });
+    
+    filtroModalCurso.innerHTML = '<option value="">Todos</option>';
+    Array.from(grados).sort((a,b) => a-b).forEach(g => {
+        filtroModalCurso.innerHTML += `<option value="${g}">${g}° Medio</option>`;
+    });
+
+    filtroModalLetra.innerHTML = '<option value="">Todas</option>';
+    Array.from(letras).sort().forEach(l => {
+        filtroModalLetra.innerHTML += `<option value="${l}">${l}</option>`;
+    });
+}
+
+function filtrarAlumnosModal() {
+    const gradoSelect = filtroModalCurso.value;
+    const letraSelect = filtroModalLetra.value;
+    const textoBuscado = buscadorModalAlumno.value.toLowerCase().trim();
+
+    const alumnosFiltrados = todosLosAlumnos.filter(alumno => {
+        const coincideGrado = gradoSelect === "" || String(alumno.grado) === String(gradoSelect);
+        const coincideLetra = letraSelect === "" || String(alumno.nombre_curso).toUpperCase() === String(letraSelect).toUpperCase();
+        
+        const nombreCompleto = `${alumno.nombres} ${alumno.apellido_paterno} ${alumno.apellido_materno || ''}`.toLowerCase();
+        const rutCompleto = alumno.rut.toLowerCase();
+        const coincideTexto = textoBuscado === "" || nombreCompleto.includes(textoBuscado) || rutCompleto.includes(textoBuscado);
+
+        return coincideGrado && coincideLetra && coincideTexto;
+    });
+
+    selectModalAlumno.innerHTML = '<option value="">Seleccionar alumno...</option>';
+    
+    alumnosFiltrados.sort((a, b) => a.apellido_paterno.localeCompare(b.apellido_paterno));
+
+    alumnosFiltrados.forEach(alumno => {
+        const option = document.createElement('option');
+        option.value = alumno.id_alumno;
+        option.textContent = `${alumno.apellido_paterno} ${alumno.apellido_materno || ''}, ${alumno.nombres} (${alumno.grado ? alumno.grado+'° '+alumno.nombre_curso : 'Sin curso'})`;
+        selectModalAlumno.appendChild(option);
+    });
+}
+
+
+// ===== RENDERIZAR ANOTACIONES =====
+
 function mostrarAnotaciones(anotaciones) {
     if (!anotaciones || anotaciones.length === 0) {
         contenedorAnotaciones.innerHTML = `
@@ -435,9 +362,8 @@ function mostrarAnotaciones(anotaciones) {
     
     let html = '';
     
-  anotaciones.forEach(anotacion => {
-        // Lógica corregida
-        let tipoClass = 'informativa'; // Por defecto
+    anotaciones.forEach(anotacion => {
+        let tipoClass = 'informativa'; 
         let icono = '📖';
 
         if (anotacion.tipo === 'Positiva') {
@@ -448,13 +374,8 @@ function mostrarAnotaciones(anotaciones) {
             icono = '❌';
         }
 
-        
-        // Si es Informativa, se queda con los valores por defecto
-
         const fecha = new Date(anotacion.fecha).toLocaleDateString('es-CL', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+            year: 'numeric', month: 'long', day: 'numeric'
         });
         
         html += `
@@ -491,18 +412,89 @@ function mostrarAnotaciones(anotaciones) {
     contenedorAnotaciones.innerHTML = html;
 }
 
-// ===== MODALES =====
+
+// ===== BÚSQUEDA POR RUT =====
+
+function buscarPorRutDirecto() {
+    const rutIngresado = inputBuscarRut.value.trim();
+    
+    if (rutIngresado.length === 0) {
+        mostrarMensaje('Por favor ingresa un RUT', 'warning');
+        return;
+    }
+    
+    if (!window.RutValidator) return;
+    
+    const esValido = window.RutValidator.validar(rutIngresado);
+    
+    if (!esValido) {
+        mostrarMensaje('❌ El RUT ingresado no es válido', 'error');
+        inputBuscarRut.classList.add('rut-invalido');
+        return;
+    }
+    
+    inputBuscarRut.classList.remove('rut-invalido');
+    inputBuscarRut.classList.add('rut-valido');
+    
+    const rutLimpio = window.RutValidator.limpiar(rutIngresado);
+    const alumnoEncontrado = todosLosAlumnos.find(alumno => window.RutValidator.limpiar(alumno.rut) === rutLimpio);
+    
+    if (!alumnoEncontrado) {
+        mostrarMensaje('❌ No se encontró ningún alumno con ese RUT', 'error');
+        return;
+    }
+    
+    seleccionarAlumnoPorRut(alumnoEncontrado);
+    mostrarMensaje(`✅ Alumno encontrado: ${alumnoEncontrado.nombres} ${alumnoEncontrado.apellido_paterno}`, 'success');
+}
+
+function seleccionarAlumnoPorRut(alumno) {
+    if (window.RutValidator) {
+        inputBuscarRut.value = window.RutValidator.formatear(alumno.rut);
+        inputBuscarRut.classList.add('rut-valido');
+    }
+    
+    if (alumno.grado) {
+        filtroCurso.value = alumno.grado;
+        aplicarFiltrosAlumnos();
+    }
+    if (alumno.nombre_curso) {
+        filtroLetra.value = alumno.nombre_curso;
+        aplicarFiltrosAlumnos();
+    }
+    
+    filtroAlumno.value = alumno.id_alumno;
+    if (sugerenciasRut) sugerenciasRut.style.display = 'none';
+    
+    seleccionarAlumnoPorSelect();
+}
+
+function inicializarBuscadorRut() {
+    if (window.RutValidator && window.RutValidator.BuscadorRut && inputBuscarRut && sugerenciasRut) {
+        buscadorRut = new window.RutValidator.BuscadorRut({
+            inputElement: inputBuscarRut,
+            sugerenciasElement: sugerenciasRut,
+            alumnos: todosLosAlumnos,
+            onSelect: seleccionarAlumnoPorRut,
+            minCaracteres: 2,
+            validarFormato: true
+        });
+    }
+}
+
+
+// ===== MANEJO DE MODALES Y CRUD =====
+
 function abrirModalNueva() {
-    // Si hay un alumno seleccionado, preseleccionarlo
     if (alumnoSeleccionado) {
-        document.getElementById('modalAlumno').value = alumnoSeleccionado.id_alumno;
+        selectModalAlumno.value = alumnoSeleccionado.id_alumno;
     }
     modalNuevaAnotacion.style.display = 'block';
 }
 
 function cerrarModalNueva() {
     modalNuevaAnotacion.style.display = 'none';
-    document.getElementById('modalAlumno').value = '';
+    selectModalAlumno.value = '';
     document.getElementById('modalDocente').value = '';
     document.getElementById('modalTipo').value = '';
     document.getElementById('modalDescripcion').value = '';
@@ -516,28 +508,20 @@ async function abrirModalEditar(idAnotacion) {
         const anotacion = await response.json();
         
         document.getElementById('editIdAnotacion').value = anotacion.id_anotacion;
-        document.getElementById('editAlumnoNombre').textContent = 
-    `${anotacion.alumno_nombres} ${anotacion.alumno_apellido_paterno} ${anotacion.alumno_apellido_materno || ''}`;
-        document.getElementById('editDocenteNombre').textContent = 
-            `${anotacion.docente_nombre} ${anotacion.docente_apellido}`;
-        document.getElementById('editFecha').textContent = 
-            new Date(anotacion.fecha).toLocaleDateString('es-CL');
+        document.getElementById('editAlumnoNombre').textContent = `${anotacion.alumno_nombres} ${anotacion.alumno_apellido_paterno} ${anotacion.alumno_apellido_materno || ''}`;
+        document.getElementById('editDocenteNombre').textContent = `${anotacion.docente_nombre} ${anotacion.docente_apellido}`;
+        document.getElementById('editFecha').textContent = new Date(anotacion.fecha).toLocaleDateString('es-CL');
         document.getElementById('editTipo').value = anotacion.tipo;
         document.getElementById('editDescripcion').value = anotacion.descripcion;
         
         modalEditarAnotacion.style.display = 'block';
     } catch (error) {
-        console.error('Error:', error);
         mostrarMensaje('Error al cargar la anotación', 'error');
     }
 }
 
-function cerrarModalEditar() {
-    modalEditarAnotacion.style.display = 'none';
-}
-
 async function guardarNuevaAnotacion() {
-    const idAlumno = document.getElementById('modalAlumno').value;
+    const idAlumno = selectModalAlumno.value;
     const idDocente = document.getElementById('modalDocente').value;
     const tipo = document.getElementById('modalTipo').value;
     const descripcion = document.getElementById('modalDescripcion').value.trim();
@@ -556,25 +540,16 @@ async function guardarNuevaAnotacion() {
         const response = await fetch(`${API_URL}/anotaciones`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id_alumno: idAlumno,
-                id_docente: idDocente,
-                tipo: tipo,
-                descripcion: descripcion
-            })
+            body: JSON.stringify({ id_alumno: idAlumno, id_docente: idDocente, tipo: tipo, descripcion: descripcion })
         });
         
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Error al guardar');
-        }
+        if (!response.ok) throw new Error('Error al guardar');
         
         cerrarModalNueva();
         mostrarMensaje('✅ Anotación creada correctamente', 'success');
         cargarAnotaciones();
     } catch (error) {
-        console.error('Error:', error);
-        mostrarMensaje('Error al crear la anotación: ' + error.message, 'error');
+        mostrarMensaje('Error al crear la anotación', 'error');
     }
 }
 
@@ -583,67 +558,46 @@ async function actualizarAnotacion() {
     const tipo = document.getElementById('editTipo').value;
     const descripcion = document.getElementById('editDescripcion').value.trim();
     
-    if (!tipo || !descripcion) {
-        mostrarMensaje('Por favor completa todos los campos', 'warning');
-        return;
-    }
-    
-    if (descripcion.length < 10) {
-        mostrarMensaje('La descripción debe tener al menos 10 caracteres', 'warning');
-        return;
-    }
+    if (!tipo || !descripcion) return mostrarMensaje('Por favor completa todos los campos', 'warning');
+    if (descripcion.length < 10) return mostrarMensaje('La descripción debe tener al menos 10 caracteres', 'warning');
     
     try {
         const response = await fetch(`${API_URL}/anotaciones/${idAnotacion}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tipo: tipo,
-                descripcion: descripcion
-            })
+            body: JSON.stringify({ tipo: tipo, descripcion: descripcion })
         });
         
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Error al actualizar');
-        }
+        if (!response.ok) throw new Error('Error al actualizar');
         
-        cerrarModalEditar();
+        modalEditarAnotacion.style.display = 'none';
         mostrarMensaje('✅ Anotación actualizada correctamente', 'success');
         cargarAnotaciones();
     } catch (error) {
-        console.error('Error:', error);
-        mostrarMensaje('Error al actualizar la anotación: ' + error.message, 'error');
+        mostrarMensaje('Error al actualizar la anotación', 'error');
     }
 }
 
 async function eliminarAnotacion() {
-    if (!confirm('¿Estás seguro de eliminar esta anotación? Esta acción no se puede deshacer.')) {
-        return;
-    }
+    if (!confirm('¿Estás seguro de eliminar esta anotación?')) return;
     
     const idAnotacion = document.getElementById('editIdAnotacion').value;
     
     try {
-        const response = await fetch(`${API_URL}/anotaciones/${idAnotacion}`, {
-            method: 'DELETE'
-        });
+        const response = await fetch(`${API_URL}/anotaciones/${idAnotacion}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Error al eliminar');
         
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Error al eliminar');
-        }
-        
-        cerrarModalEditar();
+        modalEditarAnotacion.style.display = 'none';
         mostrarMensaje('✅ Anotación eliminada correctamente', 'success');
         cargarAnotaciones();
     } catch (error) {
-        console.error('Error:', error);
-        mostrarMensaje('Error al eliminar la anotación: ' + error.message, 'error');
+        mostrarMensaje('Error al eliminar la anotación', 'error');
     }
 }
 
-// ===== UTILIDADES =====
+
+// ===== UTILIDADES MENORES =====
+
 function limpiarFiltros() {
     filtroCurso.value = '';
     filtroLetra.value = '';
@@ -654,9 +608,6 @@ function limpiarFiltros() {
         inputBuscarRut.value = '';
         inputBuscarRut.classList.remove('rut-valido', 'rut-invalido');
     }
-    if (sugerenciasRut) {
-        sugerenciasRut.style.display = 'none';
-    }
     
     alumnoSeleccionado = null;
     infoAlumno.style.display = 'none';
@@ -665,53 +616,21 @@ function limpiarFiltros() {
 }
 
 function mostrarCargando() {
-    contenedorAnotaciones.innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-            <p>Cargando anotaciones...</p>
-        </div>
-    `;
+    contenedorAnotaciones.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando anotaciones...</p></div>`;
 }
 
 function mostrarError(mensaje) {
-    contenedorAnotaciones.innerHTML = `
-        <div class="no-data" style="color: #dc3545;">
-            <p>⚠️ ${mensaje}</p>
-        </div>
-    `;
+    contenedorAnotaciones.innerHTML = `<div class="no-data" style="color: #dc3545;"><p>⚠️ ${mensaje}</p></div>`;
 }
 
 function mostrarMensaje(mensaje, tipo = 'info') {
-    const colores = {
-        success: '#28a745',
-        error: '#dc3545',
-        warning: '#ffc107',
-        info: '#17a2b8'
-    };
-    
+    const colores = { success: '#28a745', error: '#dc3545', warning: '#ffc107', info: '#17a2b8' };
     const div = document.createElement('div');
     div.className = 'mensaje-toast';
-    div.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${colores[tipo]};
-        color: white;
-        padding: 15px 25px;
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        z-index: 10000;
-        animation: slideInRight 0.3s ease;
-        max-width: 400px;
-        font-weight: 500;
-    `;
+    div.style.cssText = `position: fixed; top: 20px; right: 20px; background: ${colores[tipo]}; color: white; padding: 15px 25px; border-radius: 8px; z-index: 10000; font-weight: 500;`;
     div.textContent = mensaje;
     document.body.appendChild(div);
-    
-    setTimeout(() => {
-        div.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => div.remove(), 300);
-    }, 3000);
+    setTimeout(() => { div.remove(); }, 3000);
 }
 
 function cerrarSesion() {
@@ -720,5 +639,5 @@ function cerrarSesion() {
     }
 }
 
-// Hacer accesible globalmente para onclick
+// Hacer accesible globalmente para el botón "Editar" en el HTML
 window.abrirModalEditar = abrirModalEditar;

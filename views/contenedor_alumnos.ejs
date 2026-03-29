@@ -137,6 +137,7 @@
                             </td>
                             <td>
                                 <a href="#modalEdicionAlumno" 
+                               
                                    class="btn-small amber darken-2 modal-trigger waves-effect waves-light" 
                                    onclick="cargarAlumno('<%= a.id_alumno %>', '<%= a.rut %>', '<%= a.nombres %>', '<%= a.apellido_paterno %>', '<%= a.apellido_materno %>', '<%= a.fecha_nacimiento %>', '<%= a.curso_id %>')"
                                 >
@@ -212,144 +213,226 @@
             
             <div class="modal-footer">
                 <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancelar</a>
-                <button type="submit" class="waves-effect waves-green btn blue darken-1">Guardar Cambios</button>
+                <button id="btnGuardarEdicion" type="submit" class="waves-effect waves-green btn blue darken-1">Guardar Cambios</button>
             </div>
         </form>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-       document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar Materialize (Modales, Selects, etc)
-            M.AutoInit();
+      
 
-            // ==========================================
-            // VALIDACIÓN DE RUT: DUPLICADOS Y MATEMÁTICA
-            // ==========================================
+      document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar Materialize (Modales, Selects, etc)
+    M.AutoInit();
+
+    // ==========================================
+    // 1. FUNCIONES AUXILIARES DE RUT LOCALES
+    // ==========================================
+    const filasTabla = document.querySelectorAll('table tbody tr');
+    const rutsExistentes = [];
+    
+    filasTabla.forEach(fila => {
+        if (fila.cells.length > 1) {
+            const rutEnTabla = fila.cells[0].textContent.trim();
+            rutsExistentes.push(rutEnTabla);
+        }
+    });
+    
+    const limpiarRut = (rut) => rut.replace(/[^0-9kK]/g, '').toUpperCase();
+    const rutsLimpios = rutsExistentes.map(limpiarRut);
+
+    function validarRutMatematico(rut) {
+        let valor = limpiarRut(rut);
+        if (valor.length < 8) return false;
+
+        let cuerpo = valor.slice(0, -1);
+        let dv = valor.slice(-1);
+
+        let suma = 0;
+        let multiplo = 2;
+
+        for (let i = 1; i <= cuerpo.length; i++) {
+            let index = multiplo * valor.charAt(cuerpo.length - i);
+            suma = suma + index;
+            multiplo = multiplo < 7 ? multiplo + 1 : 2;
+        }
+
+        let dvEsperado = 11 - (suma % 11);
+        dvEsperado = (dvEsperado == 11) ? 0 : dvEsperado;
+        dvEsperado = (dvEsperado == 10) ? "K" : dvEsperado.toString();
+
+        return dvEsperado === dv;
+    }
+
+
+    // ==========================================
+    // 2. VALIDACIÓN: MODAL CREAR ALUMNO
+    // ==========================================
+    const inputRut = document.getElementById('rut');
+    const btnGuardar = document.getElementById('btnGuardarAlumno');
+    
+    if(btnGuardar) {
+        btnGuardar.disabled = true;
+        btnGuardar.classList.replace('green', 'grey');
+    }
+
+    if(inputRut && btnGuardar) {
+        inputRut.addEventListener('input', function() {
+            const rutLimpio = limpiarRut(this.value);
             
-            // 1. Extraemos los RUTs de la tabla para buscar duplicados
-            const filasTabla = document.querySelectorAll('table tbody tr');
-            const rutsExistentes = [];
-            
-            filasTabla.forEach(fila => {
-                if (fila.cells.length > 1) {
-                    const rutEnTabla = fila.cells[0].textContent.trim();
-                    rutsExistentes.push(rutEnTabla);
+            if (rutLimpio.length >= 8) {
+                const esValido = validarRutMatematico(this.value);
+                const esDuplicado = rutsLimpios.includes(rutLimpio);
+
+                if (!esValido) {
+                    btnGuardar.disabled = true;
+                    btnGuardar.classList.replace('green', 'grey');
+                    this.classList.add('invalid');
+                    this.classList.remove('valid');
+                } else if (esDuplicado) {
+                    btnGuardar.disabled = true;
+                    btnGuardar.classList.replace('green', 'grey');
+                    this.classList.add('invalid');
+                    this.classList.remove('valid');
+                    M.toast({html: '⚠️ Este RUT ya está registrado', classes: 'red rounded'});
+                } else {
+                    btnGuardar.disabled = false;
+                    btnGuardar.classList.replace('grey', 'green');
+                    this.classList.remove('invalid');
+                    this.classList.add('valid');
                 }
-            });
-            
-            // Funciones auxiliares
-            const limpiarRut = (rut) => rut.replace(/[^0-9kK]/g, '').toUpperCase();
-            const rutsLimpios = rutsExistentes.map(limpiarRut);
-
-            // 2. FÓRMULA OFICIAL DEL RUT CHILENO (Módulo 11)
-            function validarRutMatematico(rut) {
-                let valor = limpiarRut(rut);
-                if (valor.length < 8) return false;
-
-                let cuerpo = valor.slice(0, -1);
-                let dv = valor.slice(-1);
-
-                let suma = 0;
-                let multiplo = 2;
-
-                // Para cada dígito del cuerpo, de derecha a izquierda
-                for (let i = 1; i <= cuerpo.length; i++) {
-                    let index = multiplo * valor.charAt(cuerpo.length - i);
-                    suma = suma + index;
-                    multiplo = multiplo < 7 ? multiplo + 1 : 2;
-                }
-
-                let dvEsperado = 11 - (suma % 11);
-                dvEsperado = (dvEsperado == 11) ? 0 : dvEsperado;
-                dvEsperado = (dvEsperado == 10) ? "K" : dvEsperado.toString();
-
-                return dvEsperado === dv;
-            }
-
-            const inputRut = document.getElementById('rut');
-            const btnGuardar = document.getElementById('btnGuardarAlumno');
-            
-            // Empezamos con el botón deshabilitado por seguridad
-            if(btnGuardar) {
+            } else {
                 btnGuardar.disabled = true;
                 btnGuardar.classList.replace('green', 'grey');
-            }
-
-            if(inputRut && btnGuardar) {
-                inputRut.addEventListener('input', function() {
-                    const rutLimpio = limpiarRut(this.value);
-                    
-                    // Solo validamos si ya escribió al menos 8 caracteres (para no molestar mientras tipea)
-                    if (rutLimpio.length >= 8) {
-                        const esValido = validarRutMatematico(this.value);
-                        const esDuplicado = rutsLimpios.includes(rutLimpio);
-
-                        if (!esValido) {
-                            // RUT Matemáticamente Falso
-                            btnGuardar.disabled = true;
-                            btnGuardar.classList.replace('green', 'grey');
-                            this.classList.add('invalid');
-                            this.classList.remove('valid');
-                            
-                            // Truquito para no spamear mensajes: solo mostramos el toast si el input pierde el foco luego
-                        } else if (esDuplicado) {
-                            // RUT Válido pero ya existe
-                            btnGuardar.disabled = true;
-                            btnGuardar.classList.replace('green', 'grey');
-                            this.classList.add('invalid');
-                            this.classList.remove('valid');
-                            M.toast({html: '⚠️ Este RUT ya está registrado', classes: 'red rounded'});
-                        } else {
-                            // RUT Válido y Nuevo (¡ÉXITO!)
-                            btnGuardar.disabled = false;
-                            btnGuardar.classList.replace('grey', 'green');
-                            this.classList.remove('invalid');
-                            this.classList.add('valid'); // Pone la rayita verde debajo del input
-                        }
-                    } else {
-                        // Mientras escribe, mantenemos bloqueado pero sin alertas rojas
-                        btnGuardar.disabled = true;
-                        btnGuardar.classList.replace('green', 'grey');
-                        this.classList.remove('invalid', 'valid');
-                    }
-                });
-
-                // Si el usuario sale del input y dejó un RUT inválido, ahí le lanzamos la alerta roja
-                inputRut.addEventListener('blur', function() {
-                    const rutLimpio = limpiarRut(this.value);
-                    if (rutLimpio.length > 0 && rutLimpio.length >= 8 && !validarRutMatematico(this.value)) {
-                        M.toast({html: '❌ El RUT ingresado no es válido', classes: 'red rounded'});
-                    }
-                });
+                this.classList.remove('invalid', 'valid');
             }
         });
-        
 
-        // Script del Buscador en tiempo real
-        const inputBusqueda = document.getElementById('buscador_alumnos');
-        if(inputBusqueda) {
-            inputBusqueda.addEventListener('keyup', function() {
-                const texto = this.value.toLowerCase();
-                const filas = document.querySelectorAll('table tbody tr');
-                
-                filas.forEach(fila => {
-                    // Ignorar fila de mensaje "No hay alumnos"
-                    if(fila.cells.length === 1) return; 
+        inputRut.addEventListener('blur', function() {
+            const rutLimpio = limpiarRut(this.value);
+            if (rutLimpio.length >= 8 && !validarRutMatematico(this.value)) {
+                M.toast({html: '❌ El RUT ingresado no es válido', classes: 'red rounded'});
+            }
+        });
+    }
 
-                    const rut = fila.cells[0].textContent.toLowerCase();
-                    const nombre = fila.cells[1].textContent.toLowerCase();
-                    const apellido = fila.cells[2].textContent.toLowerCase();
-                    
-                    if(rut.includes(texto) || nombre.includes(texto) || apellido.includes(texto)) {
-                        fila.style.display = ''; 
-                    } else {
-                        fila.style.display = 'none'; 
+
+    // ==========================================
+    // 3. VALIDACIÓN: MODAL EDITAR ALUMNO
+    // ==========================================
+    const inputRutEditar = document.getElementById('rut_editar');
+    const btnGuardarEdicion = document.getElementById('btnGuardarEdicion'); 
+
+    // Aquí está el arreglo: Ya no pedimos window.RutValidator, usamos tu función local
+    if (inputRutEditar) { 
+        inputRutEditar.addEventListener('input', function() {
+            const rutLimpio = limpiarRut(this.value); // Usamos la local
+
+            if (rutLimpio.length >= 8) {
+                const esValido = validarRutMatematico(this.value); // Usamos la local
+
+                if (esValido) {
+                    this.classList.remove('invalid');
+                    this.classList.add('valid');
+                    if (btnGuardarEdicion) {
+                        btnGuardarEdicion.disabled = false;
+                        btnGuardarEdicion.classList.remove('grey');
+                        btnGuardarEdicion.classList.add('blue', 'darken-1');
                     }
-                });
+                } else {
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                    if (btnGuardarEdicion) {
+                        btnGuardarEdicion.disabled = true;
+                        btnGuardarEdicion.classList.remove('blue', 'darken-1');
+                        btnGuardarEdicion.classList.add('grey');
+                    }
+                }
+            } else {
+                this.classList.remove('valid', 'invalid');
+                if (btnGuardarEdicion) {
+                    btnGuardarEdicion.disabled = true;
+                    btnGuardarEdicion.classList.remove('blue', 'darken-1');
+                    btnGuardarEdicion.classList.add('grey');
+                }
+            }
+        });
+
+        inputRutEditar.addEventListener('blur', function() {
+            const rutLimpio = limpiarRut(this.value);
+            if (rutLimpio.length >= 8 && !validarRutMatematico(this.value)) {
+                M.toast({html: '❌ El RUT ingresado es inválido', classes: 'red rounded'});
+            }
+        });
+    }
+
+
+    // ==========================================
+    // 4. BUSCADOR EN TIEMPO REAL
+    // ==========================================
+    const inputBusqueda = document.getElementById('buscador_alumnos');
+    if(inputBusqueda) {
+        inputBusqueda.addEventListener('keyup', function() {
+            const texto = this.value.toLowerCase();
+            const filas = document.querySelectorAll('table tbody tr');
+            
+            filas.forEach(fila => {
+                if(fila.cells.length === 1) return; 
+
+                const rut = fila.cells[0].textContent.toLowerCase();
+                const nombre = fila.cells[1].textContent.toLowerCase();
+                const apellido = fila.cells[2].textContent.toLowerCase();
+                
+                if(rut.includes(texto) || nombre.includes(texto) || apellido.includes(texto)) {
+                    fila.style.display = ''; 
+                } else {
+                    fila.style.display = 'none'; 
+                }
             });
-        }
-        
+        });
+    }
+});
+
+// ==========================================
+// 5. FUNCIÓN CARGAR ALUMNO AL MODAL
+// ==========================================
+// Esta función debe quedar AFUERA del DOMContentLoaded para que el HTML la pueda ver
+function cargarAlumno(id, rut, nombres, apellidoPaterno, apellidoMaterno, fechaNacimiento, cursoId) {
+    document.getElementById('id_alumno_editar').value = id;
+    
+    // Pasamos el RUT directo sin formateador externo
+    const inputRut = document.getElementById('rut_editar');
+    inputRut.value = rut;
+    inputRut.classList.add('valid'); 
+    inputRut.classList.remove('invalid');
+
+    // Desbloqueamos el botón por defecto al abrir (porque viene válido de la BD)
+    const btnGuardarEdicion = document.getElementById('btnGuardarEdicion');
+    if(btnGuardarEdicion) {
+        btnGuardarEdicion.disabled = false;
+        btnGuardarEdicion.classList.remove('grey');
+        btnGuardarEdicion.classList.add('blue', 'darken-1');
+    }
+
+    document.getElementById('nombre_editar').value = nombres;
+    document.getElementById('apellido_paterno_editar').value = apellidoPaterno;
+    document.getElementById('apellido_materno_editar').value = apellidoMaterno !== 'null' ? apellidoMaterno : '';
+
+    if (fechaNacimiento && fechaNacimiento !== 'null') {
+        const fecha = new Date(fechaNacimiento);
+        fecha.setMinutes(fecha.getMinutes() + fecha.getTimezoneOffset());
+        document.getElementById('fecha_editar').value = fecha.toISOString().split('T')[0];
+    }
+
+    const selectCurso = document.getElementById('curso_editar');
+    selectCurso.value = cursoId;
+
+    if (typeof M !== 'undefined') {
+        M.updateTextFields();
+        M.FormSelect.init(selectCurso);
+    }
+}
     </script>
 </body>
 </html>

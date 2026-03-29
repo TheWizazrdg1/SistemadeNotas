@@ -54,7 +54,6 @@ async function cargarCursos() {
         
         const cursos = await response.json();
         
-        // Extraer grados únicos
         const grados = new Set();
         const letras = new Set();
         
@@ -63,7 +62,6 @@ async function cargarCursos() {
             letras.add(curso.nombre_curso);
         });
         
-        // Llenar select de curso (grado)
         filtroCurso.innerHTML = '<option value="">Todos los cursos</option>';
         Array.from(grados).sort((a, b) => a - b).forEach(grado => {
             const option = document.createElement('option');
@@ -72,7 +70,6 @@ async function cargarCursos() {
             filtroCurso.appendChild(option);
         });
         
-        // Llenar select de letra
         filtroLetra.innerHTML = '<option value="">Todas</option>';
         Array.from(letras).sort().forEach(letra => {
             const option = document.createElement('option');
@@ -110,7 +107,6 @@ async function cargarAsignaturas() {
 }
 
 // Cargar lista de alumnos
-// Cargar lista de alumnos
 async function cargarAlumnos() {
     try {
         const response = await fetch(`${API_URL}/alumnos`);
@@ -119,34 +115,27 @@ async function cargarAlumnos() {
         todosLosAlumnos = await response.json();
         aplicarFiltrosAlumnos();
         
-        // --- NUEVO CÓDIGO: Inicializar el buscador de RUT ---
         if (window.RutValidator && window.RutValidator.BuscadorRut) {
             new window.RutValidator.BuscadorRut({
                 inputElement: inputBuscarRut,
                 sugerenciasElement: sugerenciasRut,
                 alumnos: todosLosAlumnos,
                 onSelect: (alumno) => {
-                    // Cuando se selecciona de la lista desplegable
                     seleccionarAlumnoDirecto(alumno);
                 }
             });
             M.FormSelect.init(document.querySelectorAll('select'));
         }
         
-        // --
-        // -------------------------------------------------
-        
     } catch (error) {
         console.error('Error:', error);
         mostrarError('Error al cargar la lista de alumnos');
     }
 }
-// --- NUEVO CÓDIGO: Evento para el botón BUSCAR ---
+
 if (btnBuscarRut) {
     btnBuscarRut.addEventListener('click', () => {
         const rutIngresado = inputBuscarRut.value;
-        
-        // Usamos el limpiador de tu validador
         const rutLimpio = window.RutValidator.limpiar(rutIngresado);
         
         if (rutLimpio.length < 2) {
@@ -154,7 +143,6 @@ if (btnBuscarRut) {
             return;
         }
 
-        // Buscar en el array global de alumnos
         const alumnoEncontrado = todosLosAlumnos.find(a => 
             window.RutValidator.limpiar(a.rut) === rutLimpio
         );
@@ -167,16 +155,10 @@ if (btnBuscarRut) {
     });
 }
 
-/**
- * Selecciona un alumno ignorando los filtros de curso/letra actuales
- * @param {Object} alumno - Objeto del alumno encontrado
- */
 function seleccionarAlumnoDirecto(alumno) {
-    // 1. Limpiar filtros visuales de curso y letra para evitar confusiones
     filtroCurso.value = '';
     filtroLetra.value = '';
     
-    // 2. Regenerar el select de alumnos con TODOS los alumnos (quitando filtros)
     filtroAlumno.innerHTML = '<option value="">Seleccionar alumno...</option>';
     todosLosAlumnos.forEach(a => {
         const option = document.createElement('option');
@@ -185,38 +167,28 @@ function seleccionarAlumnoDirecto(alumno) {
         filtroAlumno.appendChild(option);
     });
 
-    // 3. Seleccionar al alumno en el dropdown
     filtroAlumno.value = alumno.id_alumno;
-
-    // 4. Cargar sus notas
     cargarCalificaciones();
-    
-    // 5. Feedback visual (opcional)
-    // inputBuscarRut.value = ''; // Si quieres limpiar el buscador después de encontrarlo
 }
 
-// Aplicar filtros de curso y letra a la lista de alumnos
 function aplicarFiltrosAlumnos() {
     const gradoSeleccionado = filtroCurso.value;
     const letraSeleccionada = filtroLetra.value;
     
     let alumnosFiltrados = todosLosAlumnos;
     
-    // Filtrar por grado
     if (gradoSeleccionado) {
         alumnosFiltrados = alumnosFiltrados.filter(alumno => 
             alumno.grado == gradoSeleccionado
         );
     }
     
-    // Filtrar por letra
     if (letraSeleccionada) {
         alumnosFiltrados = alumnosFiltrados.filter(alumno => 
             alumno.nombre_curso === letraSeleccionada
         );
     }
     
-    // Actualizar select de alumnos
     filtroAlumno.innerHTML = '<option value="">Seleccionar alumno...</option>';
     
     alumnosFiltrados.forEach(alumno => {
@@ -226,7 +198,6 @@ function aplicarFiltrosAlumnos() {
         filtroAlumno.appendChild(option);
     });
     
-    // Si ya había un alumno seleccionado y ya no está en la lista filtrada, limpiar
     const alumnoActual = filtroAlumno.value;
     if (alumnoActual && !alumnosFiltrados.find(a => a.id_alumno == alumnoActual)) {
         filtroAlumno.value = '';
@@ -234,7 +205,6 @@ function aplicarFiltrosAlumnos() {
     }
 }
 
-// Cargar calificaciones del alumno seleccionado
 async function cargarCalificaciones() {
     const idAlumno = filtroAlumno.value;
     
@@ -250,8 +220,6 @@ async function cargarCalificaciones() {
         if (!response.ok) throw new Error('Error al cargar calificaciones');
         
         const datos = await response.json();
-        
-        // Guardar datos globalmente para el PDF
         datosActuales = datos;
         
         if (datos.length === 0) {
@@ -267,25 +235,23 @@ async function cargarCalificaciones() {
     }
 }
 
-// Mostrar calificaciones organizadas por asignatura
 function mostrarCalificaciones(datos) {
     if (!datos || datos.length === 0) return;
     
-    // Mostrar info del alumno
     const primerDato = datos[0];
-   nombreAlumno.textContent = `${primerDato.nombres} ${primerDato.apellido_paterno} ${primerDato.apellido_materno || ''}`;
+    nombreAlumno.textContent = `${primerDato.nombres} ${primerDato.apellido_paterno} ${primerDato.apellido_materno || ''}`;
     rutAlumno.textContent = primerDato.rut;
-    cursoAlumno.textContent = `${primerDato.grado}° ${primerDato.nombre_curso}`;
+    
+    // --- INCORPORACIÓN DEL PROFESOR JEFE EN LA VISTA ---
+    const nombreProfeJefe = primerDato.profe_jefe_nombre ? `${primerDato.profe_jefe_nombre} ${primerDato.profe_jefe_apellido}` : 'No asignado';
+    cursoAlumno.textContent = `${primerDato.grado}° ${primerDato.nombre_curso} | Prof. Jefe: ${nombreProfeJefe}`;
+    
     infoAlumno.style.display = 'block';
     
-    // Obtener asignatura seleccionada en el filtro
     const asignaturaFiltro = filtroAsignatura.value;
-    
-    // Agrupar por asignatura
     const asignaturas = {};
     
     datos.forEach(nota => {
-        // Si hay filtro de asignatura y no coincide, saltar
         if (asignaturaFiltro && nota.nombre_asignatura !== asignaturaFiltro) {
             return;
         }
@@ -300,7 +266,6 @@ function mostrarCalificaciones(datos) {
         asignaturas[nota.nombre_asignatura].notas.push(nota);
     });
     
-    // Verificar si hay datos después del filtro
     if (Object.keys(asignaturas).length === 0) {
         contenedorCalificaciones.innerHTML = `
             <div class="no-data">
@@ -311,17 +276,13 @@ function mostrarCalificaciones(datos) {
         return;
     }
     
-    // Calcular promedio general
     let sumaTotal = 0;
     let cantidadTotal = 0;
-    
-    // Generar HTML
     let html = '';
     
     Object.keys(asignaturas).sort().forEach(nombreAsig => {
         const asig = asignaturas[nombreAsig];
         
-        // Calcular promedio de la asignatura
         let suma = 0;
         let cantidad = 0;
         
@@ -333,7 +294,7 @@ function mostrarCalificaciones(datos) {
         });
         
         let promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : null;
-        if (promedio === '3.9') promedio = '4.0'; // El salvavidas
+        if (promedio === '3.9') promedio = '4.0'; 
         
         if (promedio !== null) {
             sumaTotal += parseFloat(promedio);
@@ -380,10 +341,9 @@ function mostrarCalificaciones(datos) {
     
     contenedorCalificaciones.innerHTML = html;
     
-    // Mostrar promedio general (solo de asignaturas filtradas)
     if (cantidadTotal > 0) {
         let promedioFinal = (sumaTotal / cantidadTotal).toFixed(1);
-        if (promedioFinal === '3.9') promedioFinal = '4.0'; // El salvavidas
+        if (promedioFinal === '3.9') promedioFinal = '4.0'; 
         promedioGeneral.textContent = promedioFinal;
         promedioGeneral.className = `promedio-badge ${getColorNota(promedioFinal)}`;
     } else {
@@ -391,12 +351,9 @@ function mostrarCalificaciones(datos) {
         promedioGeneral.className = 'promedio-badge';
     }
     
-    // Habilitar botón de descarga
     btnDescargarPDF.disabled = false;
 }
 
-// Descargar PDF
-// Descargar PDF
 async function descargarPDF() {
     if (!datosActuales || datosActuales.length === 0) {
         alert('No hay datos para descargar');
@@ -415,12 +372,12 @@ async function descargarPDF() {
         const rut = primerDato.rut;
         const curso = `${primerDato.grado}° ${primerDato.nombre_curso}`;
         
-        // Obtener filtro de asignatura
-        const asignaturaFiltro = filtroAsignatura.value;
+        // --- INCORPORACIÓN DEL PROFESOR JEFE EN EL PDF ---
+        const profeJefe = primerDato.profe_jefe_nombre ? `${primerDato.profe_jefe_nombre} ${primerDato.profe_jefe_apellido}` : 'No asignado';
         
-        // Agrupar por asignatura (aplicando filtro)
+        const asignaturaFiltro = filtroAsignatura.value;
         const asignaturas = {};
-        let maxNotas = 0; // Variable para saber cuántas columnas horizontales de notas necesitamos
+        let maxNotas = 0; 
         
         datosActuales.forEach(nota => {
             if (asignaturaFiltro && nota.nombre_asignatura !== asignaturaFiltro) {
@@ -435,16 +392,14 @@ async function descargarPDF() {
             }
             asignaturas[nota.nombre_asignatura].notas.push(nota);
             
-            // Actualizamos el máximo de notas si esta asignatura tiene más
             if (asignaturas[nota.nombre_asignatura].notas.length > maxNotas) {
                 maxNotas = asignaturas[nota.nombre_asignatura].notas.length;
             }
         });
         
-        if (maxNotas === 0) maxNotas = 1; // Por si acaso no hay notas, dejar al menos una columna
+        if (maxNotas === 0) maxNotas = 1; 
         
-        // --- ENCABEZADO ---
-       doc.setFillColor(255, 255, 255);
+        doc.setFillColor(255, 255, 255);
         doc.rect(0, 0, 210, 40, 'F');
         
         doc.setTextColor(0, 0, 0);
@@ -464,7 +419,6 @@ async function descargarPDF() {
         });
         doc.text(`Fecha de emisión: ${fechaEmision}`, 105, 32, { align: 'center' });
         
-        // --- INFORMACIÓN DEL ALUMNO ---
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(11);
         doc.setFont(undefined, 'bold');
@@ -480,9 +434,10 @@ async function descargarPDF() {
         yPos += 6;
         doc.text(`RUT: ${rut}`, 14, yPos);
         yPos += 6;
-        doc.text(`Curso: ${curso}`, 14, yPos);
         
-        // Si hay filtro de asignatura, indicarlo
+        // Imprimiendo el Curso y el Profesor Jefe en la misma línea
+        doc.text(`Curso: ${curso} | Prof. Jefe: ${profeJefe}`, 14, yPos);
+        
         if (asignaturaFiltro) {
             yPos += 6;
             doc.setFont(undefined, 'italic');
@@ -490,7 +445,6 @@ async function descargarPDF() {
             doc.setFont(undefined, 'normal');
         }
         
-        // Calcular promedio final
         let sumaTotal = 0;
         let cantidadTotal = 0;
         
@@ -513,7 +467,7 @@ async function descargarPDF() {
         });
         
         let promedioFinal = cantidadTotal > 0 ? (sumaTotal / cantidadTotal).toFixed(1) : '-';
-        if (promedioFinal === '3.9') promedioFinal = '4.0'; // El salvavidas
+        if (promedioFinal === '3.9') promedioFinal = '4.0'; 
         
         yPos += 6;
         doc.setFont(undefined, 'bold');
@@ -521,30 +475,25 @@ async function descargarPDF() {
         
         yPos += 12;
         
-        // --- CALIFICACIONES (TABLA ÚNICA HORIZONTAL) ---
         doc.setFontSize(11);
         doc.text('DETALLE DE CALIFICACIONES', 14, yPos);
         yPos += 5;
         
-        // 1. Armar las cabeceras (Asignatura, N1, N2... Prom.)
         const encabezados = ['Asignatura'];
         for (let i = 1; i <= maxNotas; i++) {
             encabezados.push(`N${i}`);
         }
         encabezados.push('Prom.');
         
-        // 2. Armar las filas de la tabla
         const tableData = [];
         
         Object.keys(asignaturas).sort().forEach((nombreAsig) => {
             const asig = asignaturas[nombreAsig];
-            // Agregamos el nombre de la asignatura y salto de línea para el profe
             const fila = [`${nombreAsig}\n(Prof. ${asig.docente})`]; 
             
             let suma = 0;
             let cantidad = 0;
             
-            // Llenar las notas de izquierda a derecha
             for (let i = 0; i < maxNotas; i++) {
                 if (i < asig.notas.length) {
                     const nota = asig.notas[i];
@@ -554,22 +503,20 @@ async function descargarPDF() {
                         cantidad++;
                         fila.push(valorNota.toFixed(1));
                     } else {
-                        fila.push('Pte.'); // Pendiente
+                        fila.push('Pte.'); 
                     }
                 } else {
-                    fila.push('-'); // Celda vacía si la materia tiene menos notas que el máximo
+                    fila.push('-'); 
                 }
             }
             
-            // Calcular y agregar el promedio al final de la fila
             let promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : '-';
-            if (promedio === '3.9') promedio = '4.0'; // El salvavidas
+            if (promedio === '3.9') promedio = '4.0'; 
             fila.push(promedio);
             
             tableData.push(fila);
         });
         
-        // 3. Dibujar la tabla
         doc.autoTable({
             startY: yPos,
             head: [encabezados],
@@ -577,27 +524,26 @@ async function descargarPDF() {
             theme: 'striped',
             
             headStyles: {
-                fillColor: [255, 255, 255], // Morado institucional
+                fillColor: [255, 255, 255], 
                 fontSize: 9,
                 fontStyle: 'bold',
                 halign: 'center',
-                textColor: [0, 0, 0] // Blanco para encabezados
+                textColor: [0, 0, 0] 
             },
             bodyStyles: {
                 fontSize: 9,
-                textColor: [0, 0, 0] // NEGRO PARA TODO (Eliminamos colores por nota)
+                textColor: [0, 0, 0] 
             },
             columnStyles: {
-                0: { cellWidth: 70, halign: 'left', fontStyle: 'bold' } // La columna de Asignatura más ancha
+                0: { cellWidth: 70, halign: 'left', fontStyle: 'bold' } 
             },
             styles: { 
-                halign: 'center', // Centrar todas las notas
-                valign: 'middle'  // Centrar verticalmente
+                halign: 'center', 
+                valign: 'middle'  
             },
             margin: { left: 14, right: 14 }
         });
         
-        // --- PIE DE PÁGINA ---
         const totalPages = doc.internal.getNumberOfPages();
         
         for (let i = 1; i <= totalPages; i++) {
@@ -632,7 +578,6 @@ async function descargarPDF() {
     }
 }
 
-// Funciones auxiliares
 function getColorNota(nota) {
     const n = parseFloat(nota);
     if (n >= 5.5) return 'nota-alta';

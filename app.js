@@ -312,15 +312,15 @@ app.post('/crear_alumno', verificarSesion, async (req, res) => {
 
 app.post('/editar_alumno', verificarSesion, async (req, res) => {
     try {
-        // NOTA: Tienes dos rutas post('/editar_alumno'). Esta es la que recibe rut, nombre, apellido.
-        const { id_alumno, rut, nombre, apellido, fecha_nacimiento, curso_id } = req.body;
+        const { id_alumno, rut, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, curso_id } = req.body;
+
         const sql = `
             UPDATE alumnos 
-            SET rut = ?, nombre = ?, apellido = ?, fecha_nacimiento = ?, curso_id = ? 
+            SET rut = ?, nombres = ?, apellido_paterno = ?, apellido_materno = ?, fecha_nacimiento = ?, curso_id = ? 
             WHERE id_alumno = ?
         `;
-        await queryAsync(sql, [rut, nombre, apellido, fecha_nacimiento, curso_id, id_alumno]);
-        console.log(`Alumno actualizado ID: ${id_alumno} - Nuevo curso ID: ${curso_id}`);
+
+        await queryAsync(sql, [rut, nombres, apellido_paterno, apellido_materno || null, fecha_nacimiento, curso_id, id_alumno]);
         res.redirect('/alumnos'); 
     } catch (error) {
         console.error('Error al editar alumno:', error);
@@ -702,42 +702,61 @@ app.delete('/api/evaluaciones', (req, res) => {
     });
 });
 
-// ----------------------------------------------------------------------
-// ¡ATENCIÓN! Tienes 3 rutas "PUT /api/notas/:id" en tu código original. 
-// Te las dejé agrupadas aquí. Express usará la primera que coincida.
-// ----------------------------------------------------------------------
-
-// VERSIÓN 1: (La original simple)
-// VERSIÓN 2: (La del loggueo largo y console.logs)
-// VERSIÓN 3: (La del historial_notas - la más reciente que hicimos)
+// Ruta para actualizar nota con respaldo de historial
 app.put('/api/notas/:id', verificarSesion, async (req, res) => {
     const { id } = req.params;
     const { nota } = req.body;
-    const id_usuario = req.session.id_usuario; 
+    
+    console.log(`\n--- GUARDANDO NOTA ID: ${id} ---`);
 
-    if (!nota || nota < 1.0 || nota > 7.0) {
+    if (nota && (nota < 1.0 || nota > 7.0)) {
         return res.status(400).json({ error: 'Nota inválida (debe estar entre 1.0 y 7.0)' });
     }
-
+    
     try {
-        const notaAntiguaData = await queryAsync('SELECT nota FROM notas WHERE id_nota = ?', [id]);
-        const valorAnterior = notaAntiguaData.length > 0 ? notaAntiguaData[0].nota : null;
+        // 1. Identificar quién está haciendo el cambio (usamos el username o nombre guardado en sesión)
+        const usuarioModificador = (req.session && req.session.nombre) 
+            ? req.session.nombre 
+            : 'Profesor/Admin';
 
-        await queryAsync('UPDATE notas SET nota = ? WHERE id_nota = ?', [nota, id]);
-
-        if (valorAnterior === null || parseFloat(valorAnterior) !== parseFloat(nota)) {
-            await queryAsync(
-                'INSERT INTO historial_notas (id_nota, nota_anterior, nota_nueva, id_usuario) VALUES (?, ?, ?, ?)',
-                [id, valorAnterior, nota, id_usuario]
-            );
+        // 2. Consultar la nota que el alumno tenía ANTES de este cambio
+        const consultaPrevia = await queryAsync('SELECT nota FROM notas WHERE id_nota = ?', [id]);
+        
+        let notaAnterior = null;
+        if (consultaPrevia.length > 0) {
+            notaAnterior = consultaPrevia[0].nota;
         }
 
-        res.json({ mensaje: 'Nota actualizada correctamente', nota });
+        // 3. Limpiamos los valores para comparar de forma segura y evitar el error de los "Null"
+        const valorViejo = (notaAnterior !== null && notaAnterior !== '') ? parseFloat(notaAnterior) : null;
+        const valorNuevo = (nota !== null && nota !== '') ? parseFloat(nota) : null;
+
+        // 4. Verificamos que el profesor realmente haya cambiado el número
+        if (valorViejo !== valorNuevo) {
+            console.log(`📝 Cambio detectado: de ${valorViejo} a ${valorNuevo} por ${usuarioModificador}`);
+            
+            await queryAsync(`
+                UPDATE notas 
+                SET nota = ?, 
+                    nota_anterior = ?, 
+                    modificado_por = ?
+                WHERE id_nota = ?
+            `, [valorNuevo, valorViejo, usuarioModificador, id]);
+
+        } else {
+            console.log(`Igual: La nota es la misma (${valorNuevo}). Guardando sin gastar historial.`);
+            await queryAsync('UPDATE notas SET nota = ? WHERE id_nota = ?', [valorNuevo, id]);
+        }
+
+        res.json({ success: true, mensaje: 'Nota actualizada y respaldada correctamente', nota: valorNuevo });
+
     } catch (error) {
-        console.error('Error al actualizar nota y guardar historial:', error);
+        console.error('❌ Error al actualizar la nota y su respaldo:', error);
         res.status(500).json({ error: 'Error interno al actualizar la nota' });
     }
 });
+
+
 
 
 // ==========================================
@@ -975,26 +994,32 @@ app.get('/calificaciones', verificarSesion, (req, res) => {
     res.render('calificaciones', { nombre: req.session.nombre, rol: req.session.rol });
 });
 
+// Ruta para obtener las calificaciones de un alumno específico, con detalles completos
 app.get('/api/calificaciones/:id_alumno', verificarSesion, async (req, res) => {
     try {
         const { id_alumno } = req.params;
+        
         const sql = `
             SELECT 
                 n.id_nota, n.nota, n.evaluacion, n.fecha,
                 a.id_alumno, a.nombres, a.apellido_paterno, a.apellido_materno, a.rut,
                 asig.nombre_asignatura, c.grado, c.nombre_curso,
-                d.nombre as docente_nombre, d.apellido as docente_apellido
+                d.nombre as docente_nombre, d.apellido as docente_apellido,
+                dj.nombre as profe_jefe_nombre, dj.apellido as profe_jefe_apellido
             FROM notas n
             INNER JOIN alumnos a ON n.id_alumno = a.id_alumno
             INNER JOIN docente_asignatura da ON n.id_docente_asignatura = da.id_docente_asignatura
             INNER JOIN asignaturas asig ON da.id_asignatura = asig.id_asignatura
             INNER JOIN cursos c ON a.curso_id = c.id_curso
             INNER JOIN docentes d ON da.id_docente = d.id_docente
+            LEFT JOIN docentes dj ON c.id_docente = dj.id_docente
             WHERE a.id_alumno = ?
             ORDER BY asig.nombre_asignatura, n.fecha DESC
         `;
+        
         const resultados = await queryAsync(sql, [id_alumno]);
         res.json(resultados);
+        
     } catch (error) {
         console.error('Error al obtener calificaciones:', error);
         res.status(500).json({ error: 'Error al obtener calificaciones' });

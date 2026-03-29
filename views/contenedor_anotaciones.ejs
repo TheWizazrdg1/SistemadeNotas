@@ -11,7 +11,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
             <div class="header-content">
                 <div>
@@ -34,7 +33,6 @@
         </header>
 
         <div class="content">
-            <!-- Panel de Búsqueda por RUT -->
             <div class="busqueda-panel">
                 <div class="busqueda-rut-container">
                     <label for="inputBuscarRut">🔍 Buscar Alumno por RUT:</label>
@@ -53,7 +51,6 @@
                 </button>
             </div>
 
-            <!-- Panel de Filtros -->
             <div class="filtros-panel">
                 <div class="filtro-grupo">
                     <label for="filtroCurso">📚 Curso:</label>
@@ -78,19 +75,18 @@
                 
                 <div class="filtro-grupo">
                     <label for="filtroTipo">📋 Tipo:</label>
-<select id="filtroTipo">
-    <option value="">Todas</option>
-    <option value="Positiva">✅ Positivas</option>
-    <option value="Negativa">❌ Negativas</option>
-    <option value="Informativa">📖 Informativas</option>
-</select>
+                    <select id="filtroTipo">
+                        <option value="">Todas</option>
+                        <option value="Positiva">✅ Positivas</option>
+                        <option value="Negativa">❌ Negativas</option>
+                        <option value="Informativa">📖 Informativas</option>
+                    </select>
                 </div>
                 
                 <button id="btnLimpiar" class="btn-secondary">🔄 Limpiar</button>
                 <button id="btnNuevaAnotacion" class="btn-success">➕ Nueva Anotación</button>
             </div>
 
-            <!-- Información del Alumno Seleccionado -->
             <div id="infoAlumno" class="info-alumno-container" style="display: none;">
                 <div class="info-alumno-card">
                     <div class="info-alumno-header">
@@ -100,24 +96,23 @@
                             <p><strong>Curso:</strong> <span id="alumnoCurso"></span></p>
                         </div>
                         <div class="estadisticas">
-    <div class="stat-item positiva">
-        <span class="stat-number" id="statPositivas">0</span>
-        <span class="stat-label">Positivas</span>
-    </div>
-    <div class="stat-item negativa">
-        <span class="stat-number" id="statNegativas">0</span>
-        <span class="stat-label">Negativas</span>
-    </div>
-    <div class="stat-item informativa">
-        <span class="stat-number" id="statInformativas">0</span>
-        <span class="stat-label">Informativas</span>
-    </div>
-</div>
+                            <div class="stat-item positiva">
+                                <span class="stat-number" id="statPositivas">0</span>
+                                <span class="stat-label">Positivas</span>
+                            </div>
+                            <div class="stat-item negativa">
+                                <span class="stat-number" id="statNegativas">0</span>
+                                <span class="stat-label">Negativas</span>
+                            </div>
+                            <div class="stat-item informativa">
+                                <span class="stat-number" id="statInformativas">0</span>
+                                <span class="stat-label">Informativas</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Lista de Anotaciones -->
             <div id="contenedorAnotaciones" class="anotaciones-container">
                 <div class="no-data">
                     <p>👆 Selecciona un alumno o usa los filtros para ver anotaciones</p>
@@ -125,18 +120,42 @@
             </div>
         </div>
 
-        <!-- Modal Nueva Anotación -->
         <div id="modalNuevaAnotacion" class="modal">
             <div class="modal-content">
                 <span class="close" id="closeModalNueva">&times;</span>
                 <h2>➕ Nueva Anotación</h2>
                 <div class="modal-body">
-                    <label for="modalAlumno">Alumno:</label>
-                    <select id="modalAlumno" required>
+                    <div class="filtros-busqueda-modal" style="background: #f4f6f8; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #e0e0e0;">
+                        <span style="display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.9em; color: #333;">🔍 Filtrar lista de alumnos:</span>
+                        
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 80px;">
+                                <label for="filtroModalCurso">Grado:</label>
+                                <select id="filtroModalCurso">
+                                    <option value="">Todos</option>
+                                </select>
+                            </div>
+
+                            <div style="flex: 1; min-width: 80px;">
+                                <label for="filtroModalLetra">Letra:</label>
+                                <select id="filtroModalLetra">
+                                    <option value="">Todas</option>
+                                </select>
+                            </div>
+
+                            <div style="flex: 2; min-width: 150px;">
+                                <label for="buscadorModalAlumno">Nombre o RUT:</label>
+                                <input type="text" id="buscadorModalAlumno" placeholder="Ej: Gerson o 21.692...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <label for="modalAlumno">Alumno Seleccionado:</label>
+                    <select id="modalAlumno" required style="border: 2px solid #667eea; background-color: #f8f9ff;">
                         <option value="">Seleccionar alumno...</option>
                     </select>
 
-                    <label for="modalDocente">Docente:</label>
+                    <br> <label for="modalDocente">Docente:</label>
                     <select id="modalDocente" required>
                         <option value="">Seleccionar docente...</option>
                     </select>
@@ -162,7 +181,6 @@
             </div>
         </div>
 
-        <!-- Modal Editar Anotación -->
         <div id="modalEditarAnotacion" class="modal">
             <div class="modal-content">
                 <span class="close" id="closeModalEditar">&times;</span>
