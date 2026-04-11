@@ -3,6 +3,7 @@ var app = express();
 const mysql = require('mysql2');
 const cors = require('cors');
 const session = require('express-session');
+const { redirect } = require('express/lib/response');
 const MySQLStore = require('express-mysql-session')(session);
 
 
@@ -123,15 +124,35 @@ function verificarSesion(req, res, next) {
 }
 
 // Middleware: Verificador de Admin
+
 function soloAdmin(req, res, next) {
     if (!req.session || !req.session.id_usuario) {
         console.log('❌ Sin sesión, redirigiendo a /inicio');
         return res.redirect('/inicio');
     }
-    if (req.session.rol !== 'admin') {
-        console.log('❌ Usuario no es admin');
+    // 👇 Aquí agregamos que también deje pasar al superadmin
+    if (req.session.rol !== 'admin' && req.session.rol !== 'superadmin') {
+        console.log('❌ Usuario no es admin ni superadmin');
         return res.status(403).send('Acceso denegado. Se requieren permisos de administrador.');
     }
+    next();
+}
+
+function soloSuperAdmin(req, res, next) {
+    // 1. Verificamos si hay una sesión activa
+    if (!req.session || !req.session.id_usuario) {
+        console.log('❌ Sin sesión, redirigiendo a /inicio');
+        return res.redirect('/inicio');
+    }
+    
+    // 2. Verificamos si el rol es estrictamente 'superadmin'
+    if (req.session.rol !== 'superadmin') {
+        console.log(`❌ Acceso bloqueado: Usuario es ${req.session.rol}, se requiere superadmin`);
+     
+        return res.redirect('/contenedor_admin'); // Redirigimos a su panel normal si no es superadmin
+    }
+    
+    // 3. Si todo está bien, dejamos que la ruta continúe
     next();
 }
 
@@ -148,7 +169,11 @@ app.get('/inicio', (req, res) => {
     // Si ya tiene sesión activa
     if (req.session && req.session.id_usuario) {
         console.log('Usuario ya autenticado, redirigiendo...');
-        if (req.session.rol === 'admin') {
+        
+        // 👇 Validamos a dónde enviarlo según su rol exacto
+        if (req.session.rol === 'superadmin') {
+            return res.redirect('/contenedor_admin'); // Lo mandamos al panel principal donde pusiste su tarjeta especial
+        } else if (req.session.rol === 'admin') {
             return res.redirect('/contenedor_admin');
         } else {
             return res.redirect('/notas');
@@ -202,7 +227,10 @@ app.post('/login', (req, res) => {
                     console.log('✅ Sesión guardada correctamente');
                     console.log('Usuario:', user.username, '| Rol:', user.rol);
 
-                    if (user.rol === 'admin') {
+                    // 👇 Misma validación al hacer login
+                    if (user.rol === 'superadmin') {
+                        return res.redirect('/contenedor_admin');
+                    } else if (user.rol === 'admin') {
                         return res.redirect('/contenedor_admin');
                     } else {
                         return res.redirect('/notas');
@@ -243,6 +271,7 @@ app.get('/notas', verificarSesion, (req, res) => {
 app.get('/anotaciones', verificarSesion, (req, res) => {
     res.render('contenedor_anotaciones', { nombre: req.session.nombre });
 });
+
 
 
 // ==========================================
@@ -425,7 +454,48 @@ app.get('/borrar_curso/:id', verificarSesion, async (req, res) => {
     }
 });
 
+// ==========================================
+// RUTA: PANEL SUPER ADMIN
+// ==========================================
+app.get('/configuracion-global', soloSuperAdmin, async (req, res) => {
+    try {
+        // Consultamos en qué semestre estamos actualmente
+        const sql = "SELECT semestre_activo FROM configuracion_sistema WHERE id = 1";
+        const resultados = await queryAsync(sql);
+        
+        // Si no hay datos, asumimos 1 por defecto
+        const semestreActual = resultados.length > 0 ? resultados[0].semestre_activo : 1;
+        
+        res.render('contenedor_superadmin', { 
+            nombre: req.session.nombre,
+            rol: req.session.rol,
+            semestreActual: semestreActual 
+        });
+    } catch (error) {
+        console.error('Error al cargar panel superadmin:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
 
+app.post('/cambiar-semestre', soloSuperAdmin, async (req, res) => {
+    try {
+        const { semestre } = req.body;
+        
+        // Validar que solo sea 1 o 2
+        if (semestre !== '1' && semestre !== '2') {
+            return res.status(400).send('Semestre inválido.');
+        }
+
+        const sql = "UPDATE configuracion_sistema SET semestre_activo = ? WHERE id = 1";
+        await queryAsync(sql, [semestre]);
+        
+        console.log(`✅ Semestre cambiado al número: ${semestre} por el SuperAdmin`);
+        res.redirect('/configuracion-global'); 
+    } catch (error) {
+        console.error('Error al actualizar semestre:', error);
+        res.status(500).send('No se pudo actualizar el semestre.');
+    }
+});
 // ==========================================
 // 8. MÓDULO: ASIGNATURAS
 // ==========================================
