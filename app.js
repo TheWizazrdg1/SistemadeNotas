@@ -15,8 +15,8 @@ app.set('view engine', 'ejs');
 
 // CORS primero
 app.use(cors({
-  origin: 'http://localhost:3000', // Ajusta según tu puerto
-  credentials: true
+    origin: 'http://localhost:3000', // Ajusta según tu puerto
+    credentials: true
 }));
 
 // Body parsers
@@ -39,7 +39,7 @@ const dbConfig = {
     queueLimit: 0             // Sin límite de cola de espera
 };
 
-const pool = mysql.createPool(dbConfig); 
+const pool = mysql.createPool(dbConfig);
 const oConexion = pool; // Mantenemos oConexion para compatibilidad con tu código
 
 // Verificación inicial del Pool
@@ -113,12 +113,12 @@ function queryAsync(sql, params) {
 function verificarSesion(req, res, next) {
     console.log('🔍 Verificando sesión...');
     console.log('Session object:', req.session);
-    
+
     if (!req.session || !req.session.id_usuario) {
         console.log('❌ No hay sesión activa, redirigiendo a /inicio');
         return res.redirect('/inicio');
     }
-    
+
     console.log('✅ Sesión válida para usuario:', req.session.nombre);
     next();
 }
@@ -144,14 +144,14 @@ function soloSuperAdmin(req, res, next) {
         console.log('❌ Sin sesión, redirigiendo a /inicio');
         return res.redirect('/inicio');
     }
-    
+
     // 2. Verificamos si el rol es estrictamente 'superadmin'
     if (req.session.rol !== 'superadmin') {
         console.log(`❌ Acceso bloqueado: Usuario es ${req.session.rol}, se requiere superadmin`);
-     
+
         return res.redirect('/contenedor_admin'); // Redirigimos a su panel normal si no es superadmin
     }
-    
+
     // 3. Si todo está bien, dejamos que la ruta continúe
     next();
 }
@@ -169,7 +169,7 @@ app.get('/inicio', (req, res) => {
     // Si ya tiene sesión activa
     if (req.session && req.session.id_usuario) {
         console.log('Usuario ya autenticado, redirigiendo...');
-        
+
         // 👇 Validamos a dónde enviarlo según su rol exacto
         if (req.session.rol === 'superadmin') {
             return res.redirect('/contenedor_admin'); // Lo mandamos al panel principal donde pusiste su tarjeta especial
@@ -185,7 +185,7 @@ app.get('/inicio', (req, res) => {
 app.post('/login', (req, res) => {
     console.log('🔐 Intento de login...');
     console.log('Body recibido:', req.body);
-    
+
     const { Usuario, password } = req.body;
 
     if (!Usuario || !password) {
@@ -332,7 +332,7 @@ app.post('/crear_alumno', verificarSesion, async (req, res) => {
         }
         const sql = 'INSERT INTO alumnos (rut, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, curso_id) VALUES (?, ?, ?, ?, ?, ?)';
         await queryAsync(sql, [rut, nombres, apellido_paterno, apellido_materno || null, fecha_nacimiento, curso_id]);
-        res.redirect('/alumnos'); 
+        res.redirect('/alumnos');
     } catch (error) {
         console.error('Error al crear alumno:', error);
         res.status(500).send('Error al crear el alumno');
@@ -350,7 +350,7 @@ app.post('/editar_alumno', verificarSesion, async (req, res) => {
         `;
 
         await queryAsync(sql, [rut, nombres, apellido_paterno, apellido_materno || null, fecha_nacimiento, curso_id, id_alumno]);
-        res.redirect('/alumnos'); 
+        res.redirect('/alumnos');
     } catch (error) {
         console.error('Error al editar alumno:', error);
         res.status(500).send('Error al actualizar alumno');
@@ -365,7 +365,7 @@ app.get('/borrar_alumno/:id', verificarSesion, async (req, res) => {
         res.redirect('/alumnos');
     } catch (error) {
         console.error(error);
-        res.redirect('/alumnos'); 
+        res.redirect('/alumnos');
     }
 });
 
@@ -462,14 +462,14 @@ app.get('/configuracion-global', soloSuperAdmin, async (req, res) => {
         // Consultamos en qué semestre estamos actualmente
         const sql = "SELECT semestre_activo FROM configuracion_sistema WHERE id = 1";
         const resultados = await queryAsync(sql);
-        
+
         // Si no hay datos, asumimos 1 por defecto
         const semestreActual = resultados.length > 0 ? resultados[0].semestre_activo : 1;
-        
-        res.render('contenedor_superadmin', { 
+
+        res.render('contenedor_superadmin', {
             nombre: req.session.nombre,
             rol: req.session.rol,
-            semestreActual: semestreActual 
+            semestreActual: semestreActual
         });
     } catch (error) {
         console.error('Error al cargar panel superadmin:', error);
@@ -480,7 +480,7 @@ app.get('/configuracion-global', soloSuperAdmin, async (req, res) => {
 app.post('/cambiar-semestre', soloSuperAdmin, async (req, res) => {
     try {
         const { semestre } = req.body;
-        
+
         // Validar que solo sea 1 o 2
         if (semestre !== '1' && semestre !== '2') {
             return res.status(400).send('Semestre inválido.');
@@ -488,9 +488,9 @@ app.post('/cambiar-semestre', soloSuperAdmin, async (req, res) => {
 
         const sql = "UPDATE configuracion_sistema SET semestre_activo = ? WHERE id = 1";
         await queryAsync(sql, [semestre]);
-        
+
         console.log(`✅ Semestre cambiado al número: ${semestre} por el SuperAdmin`);
-        res.redirect('/configuracion-global'); 
+        res.redirect('/configuracion-global');
     } catch (error) {
         console.error('Error al actualizar semestre:', error);
         res.status(500).send('No se pudo actualizar el semestre.');
@@ -648,32 +648,49 @@ app.get('/borrar_profesor/:id', verificarSesion, async (req, res) => {
 // 10. MÓDULO: NOTAS Y EVALUACIONES (API)
 // ==========================================
 
-app.get('/api/notas',verificarSesion, (req, res) => {
-    const { curso_id } = req.query;
-    let query = `
-        SELECT DISTINCT
-            a.id_alumno, a.nombres, a.apellido_paterno, a.apellido_materno, a.rut,
-            c.nombre_curso, c.grado, c.id_curso, asig.nombre_asignatura,
-            n.evaluacion, n.nota, n.fecha, n.id_nota, n.nota_anterior, n.modificado_por,
-            d.nombre AS nombre_docente, d.apellido AS apellido_docente
-        FROM alumnos a
-        LEFT JOIN cursos c ON a.curso_id = c.id_curso
-        LEFT JOIN notas n ON a.id_alumno = n.id_alumno
-        LEFT JOIN docente_asignatura da ON n.id_docente_asignatura = da.id_docente_asignatura
-        LEFT JOIN asignaturas asig ON da.id_asignatura = asig.id_asignatura
-        LEFT JOIN docentes d ON da.id_docente = d.id_docente
-        WHERE n.id_nota IS NOT NULL AND a.estado = 1
-    `;
-    const params = [];
-    if (curso_id) {
-        query += ' AND a.curso_id = ?';
-        params.push(curso_id);
-    }
-    query += ' ORDER BY a.apellido_paterno, a.nombres, n.fecha';
-    oConexion.query(query, params, (error, resultados) => {
-        if (error) return res.status(500).json({ error: 'Error al obtener datos' });
+app.get('/api/notas', verificarSesion, async (req, res) => {
+    try {
+        const { curso_id } = req.query;
+
+        // 1. Consultar en secreto en qué semestre configuró el sistema el SuperAdmin
+        const config = await queryAsync('SELECT semestre_activo FROM configuracion_sistema WHERE id = 1');
+        const semestreActual = config.length > 0 ? config[0].semestre_activo : 1;
+
+        // 2. Traer SOLO las notas que pertenezcan a ese semestre activo
+        let query = `
+            SELECT DISTINCT
+                a.id_alumno, a.nombres, a.apellido_paterno, a.apellido_materno, a.rut,
+                c.nombre_curso, c.grado, c.id_curso, asig.nombre_asignatura,
+                n.evaluacion, n.nota, n.fecha, n.id_nota, n.nota_anterior, n.modificado_por, n.semestre,
+                d.nombre AS nombre_docente, d.apellido AS apellido_docente
+            FROM alumnos a
+            LEFT JOIN cursos c ON a.curso_id = c.id_curso
+            LEFT JOIN notas n ON a.id_alumno = n.id_alumno
+            LEFT JOIN docente_asignatura da ON n.id_docente_asignatura = da.id_docente_asignatura
+            LEFT JOIN asignaturas asig ON da.id_asignatura = asig.id_asignatura
+            LEFT JOIN docentes d ON da.id_docente = d.id_docente
+            WHERE n.id_nota IS NOT NULL 
+            AND a.estado = 1 
+            AND n.semestre = ? -- AQUÍ ESTÁ EL CANDADO MAESTRO
+        `;
+
+        // Pasamos el semestre actual a la consulta
+        const params = [semestreActual];
+
+        if (curso_id) {
+            query += ' AND a.curso_id = ?';
+            params.push(curso_id);
+        }
+
+        query += ' ORDER BY a.apellido_paterno, a.nombres, n.fecha';
+
+        const resultados = await queryAsync(query, params);
         res.json(resultados);
-    });
+
+    } catch (error) {
+        console.error('❌ Error al obtener notas filtradas por semestre:', error);
+        res.status(500).json({ error: 'Error al obtener datos' });
+    }
 });
 
 app.get('/api/evaluaciones', verificarSesion, (req, res) => {
@@ -696,6 +713,8 @@ app.post('/api/evaluaciones', async (req, res) => {
         return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
     try {
+        const config = await queryAsync('SELECT semestre_activo FROM configuracion_sistema WHERE id = 1');
+        const semestreActual = config.length > 0 ? config[0].semestre_activo : 1;
         let id_asignatura;
         const resAsignatura = await queryAsync('SELECT id_asignatura FROM asignaturas WHERE nombre_asignatura = ?', [nombre_asignatura]);
         if (resAsignatura.length > 0) {
@@ -735,8 +754,8 @@ app.post('/api/evaluaciones', async (req, res) => {
 
         const promesasInsert = alumnos.map(alumno => {
             return queryAsync(
-                'INSERT INTO notas (id_alumno, id_docente_asignatura, evaluacion, nota, fecha) VALUES (?, ?, ?, NULL, ?)',
-                [alumno.id_alumno, id_docente_asignatura, evaluacion, fecha]
+                'INSERT INTO notas (id_alumno, id_docente_asignatura, evaluacion, nota, fecha, semestre) VALUES (?, ?, ?, NULL, ?, ?)',
+                [alumno.id_alumno, id_docente_asignatura, evaluacion, fecha, semestreActual]
             );
         });
         await Promise.all(promesasInsert);
@@ -751,17 +770,17 @@ app.post('/api/evaluaciones', async (req, res) => {
 app.delete('/api/evaluaciones', (req, res) => {
     const { asignatura, evaluacion, fecha } = req.body;
     if (!asignatura || !evaluacion || !fecha) return res.status(400).json({ error: 'Faltan datos requeridos' });
-    
+
     const queryAsignatura = 'SELECT id_asignatura FROM asignaturas WHERE nombre_asignatura = ?';
     oConexion.query(queryAsignatura, [asignatura], (error, resultados) => {
         if (error || resultados.length === 0) return res.status(404).json({ error: 'Asignatura no encontrada' });
-        
+
         const id_asignatura = resultados[0].id_asignatura;
         const queryDocAsig = 'SELECT id_docente_asignatura FROM docente_asignatura WHERE id_asignatura = ?';
         oConexion.query(queryDocAsig, [id_asignatura], (error, docAsigs) => {
             if (error) return res.status(500).json({ error: 'Error al buscar relaciones' });
             if (docAsigs.length === 0) return res.status(404).json({ error: 'No se encontraron evaluaciones' });
-            
+
             const idsDocAsig = docAsigs.map(da => da.id_docente_asignatura);
             const queryDelete = `DELETE FROM notas WHERE id_docente_asignatura IN (?) AND evaluacion = ? AND fecha = ?`;
             oConexion.query(queryDelete, [idsDocAsig, evaluacion, fecha], (error, resultado) => {
@@ -776,22 +795,22 @@ app.delete('/api/evaluaciones', (req, res) => {
 app.put('/api/notas/:id', verificarSesion, async (req, res) => {
     const { id } = req.params;
     const { nota } = req.body;
-    
+
     console.log(`\n--- GUARDANDO NOTA ID: ${id} ---`);
 
     if (nota && (nota < 1.0 || nota > 7.0)) {
         return res.status(400).json({ error: 'Nota inválida (debe estar entre 1.0 y 7.0)' });
     }
-    
+
     try {
         // 1. Identificar quién está haciendo el cambio (usamos el username o nombre guardado en sesión)
-        const usuarioModificador = (req.session && req.session.nombre) 
-            ? req.session.nombre 
+        const usuarioModificador = (req.session && req.session.nombre)
+            ? req.session.nombre
             : 'Profesor/Admin';
 
         // 2. Consultar la nota que el alumno tenía ANTES de este cambio
         const consultaPrevia = await queryAsync('SELECT nota FROM notas WHERE id_nota = ?', [id]);
-        
+
         let notaAnterior = null;
         if (consultaPrevia.length > 0) {
             notaAnterior = consultaPrevia[0].nota;
@@ -804,7 +823,7 @@ app.put('/api/notas/:id', verificarSesion, async (req, res) => {
         // 4. Verificamos que el profesor realmente haya cambiado el número
         if (valorViejo !== valorNuevo) {
             console.log(`📝 Cambio detectado: de ${valorViejo} a ${valorNuevo} por ${usuarioModificador}`);
-            
+
             await queryAsync(`
                 UPDATE notas 
                 SET nota = ?, 
@@ -852,20 +871,20 @@ app.post('/guardar_asistencias', verificarSesion, async (req, res) => {
 
         for (const [id_alumno, estado] of Object.entries(asistencias)) {
             const registroPrevio = await queryAsync(
-                'SELECT estado FROM asistencias WHERE id_alumno = ? AND fecha = ? AND id_asignatura = ?', 
+                'SELECT estado FROM asistencias WHERE id_alumno = ? AND fecha = ? AND id_asignatura = ?',
                 [id_alumno, fecha, asignatura_id]
             );
 
             if (registroPrevio.length > 0) {
                 if (registroPrevio[0].estado !== estado) {
                     await queryAsync(
-                        'UPDATE asistencias SET estado = ?, hora = ? WHERE id_alumno = ? AND fecha = ? AND id_asignatura = ?', 
+                        'UPDATE asistencias SET estado = ?, hora = ? WHERE id_alumno = ? AND fecha = ? AND id_asignatura = ?',
                         [estado, hora, id_alumno, fecha, asignatura_id]
                     );
                 }
             } else {
                 await queryAsync(
-                    'INSERT INTO asistencias (id_alumno, id_asignatura, fecha, hora, estado) VALUES (?, ?, ?, ?, ?)', 
+                    'INSERT INTO asistencias (id_alumno, id_asignatura, fecha, hora, estado) VALUES (?, ?, ?, ?, ?)',
                     [id_alumno, asignatura_id, fecha, hora, estado]
                 );
             }
@@ -937,7 +956,7 @@ app.get('/api/anotaciones', async (req, res) => {
         if (id_alumno) { query += ' AND an.id_alumno = ?'; params.push(id_alumno); }
         if (tipo) { query += ' AND an.tipo = ?'; params.push(tipo); }
         if (curso_id) { query += ' AND a.curso_id = ?'; params.push(curso_id); }
-        
+
         query += ' ORDER BY an.fecha DESC, an.id_anotacion DESC';
         const resultados = await queryAsync(query, params);
         res.json(resultados);
@@ -975,22 +994,22 @@ app.post('/api/anotaciones', async (req, res) => {
         if (!id_alumno || !id_docente || !tipo || !descripcion) {
             return res.status(400).json({ error: 'Faltan datos requeridos (id_alumno, id_docente, tipo, descripcion)' });
         }
-        if (tipo !== 'Positiva' && tipo !== 'Negativa' && tipo !== 'Informativa' ) {
+        if (tipo !== 'Positiva' && tipo !== 'Negativa' && tipo !== 'Informativa') {
             return res.status(400).json({ error: 'Tipo de anotación inválido. Debe ser "Positiva" o "Negativa"' });
         }
         if (descripcion.trim().length < 10) {
             return res.status(400).json({ error: 'La descripción debe tener al menos 10 caracteres' });
         }
-        
+
         const alumnoExiste = await queryAsync('SELECT id_alumno FROM alumnos WHERE id_alumno = ?', [id_alumno]);
         if (alumnoExiste.length === 0) return res.status(404).json({ error: 'Alumno no encontrado' });
-        
+
         const docenteExiste = await queryAsync('SELECT id_docente FROM docentes WHERE id_docente = ?', [id_docente]);
         if (docenteExiste.length === 0) return res.status(404).json({ error: 'Docente no encontrado' });
-        
+
         const query = `INSERT INTO anotaciones (id_alumno, id_docente, tipo, descripcion, fecha) VALUES (?, ?, ?, ?, NOW())`;
         const resultado = await queryAsync(query, [id_alumno, id_docente, tipo, descripcion]);
-        
+
         res.status(201).json({ mensaje: 'Anotación creada correctamente', id_anotacion: resultado.insertId });
     } catch (error) {
         console.error('Error al crear anotación:', error);
@@ -1002,16 +1021,16 @@ app.put('/api/anotaciones/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const { tipo, descripcion } = req.body;
-        
+
         if (!tipo || !descripcion) return res.status(400).json({ error: 'Faltan datos requeridos (tipo, descripcion)' });
         if (tipo !== 'Positiva' && tipo !== 'Negativa' && tipo !== 'Informativa') {
             return res.status(400).json({ error: 'Tipo de anotación inválido. Debe ser "Positiva", "Negativa" o "Informativa"' });
         }
         if (descripcion.trim().length < 10) return res.status(400).json({ error: 'La descripción debe tener al menos 10 caracteres' });
-        
+
         const anotacionExiste = await queryAsync('SELECT id_anotacion FROM anotaciones WHERE id_anotacion = ?', [id]);
         if (anotacionExiste.length === 0) return res.status(404).json({ error: 'Anotación no encontrada' });
-        
+
         const query = `UPDATE anotaciones SET tipo = ?, descripcion = ? WHERE id_anotacion = ?`;
         await queryAsync(query, [tipo, descripcion, id]);
         res.json({ mensaje: 'Anotación actualizada correctamente' });
@@ -1026,7 +1045,7 @@ app.delete('/api/anotaciones/:id', async (req, res) => {
         const { id } = req.params;
         const anotacionExiste = await queryAsync('SELECT id_anotacion FROM anotaciones WHERE id_anotacion = ?', [id]);
         if (anotacionExiste.length === 0) return res.status(404).json({ error: 'Anotación no encontrada' });
-        
+
         await queryAsync('DELETE FROM anotaciones WHERE id_anotacion = ?', [id]);
         res.json({ mensaje: 'Anotación eliminada correctamente' });
     } catch (error) {
@@ -1068,10 +1087,10 @@ app.get('/calificaciones', verificarSesion, (req, res) => {
 app.get('/api/calificaciones/:id_alumno', verificarSesion, async (req, res) => {
     try {
         const { id_alumno } = req.params;
-        
+
         const sql = `
             SELECT 
-                n.id_nota, n.nota, n.evaluacion, n.fecha,
+                n.id_nota, n.nota, n.evaluacion, n.fecha,n.semestre,
                 a.id_alumno, a.nombres, a.apellido_paterno, a.apellido_materno, a.rut,
                 asig.nombre_asignatura, c.grado, c.nombre_curso,
                 d.nombre as docente_nombre, d.apellido as docente_apellido,
@@ -1086,10 +1105,10 @@ app.get('/api/calificaciones/:id_alumno', verificarSesion, async (req, res) => {
             WHERE a.id_alumno = ?
             ORDER BY asig.nombre_asignatura, n.fecha DESC
         `;
-        
+
         const resultados = await queryAsync(sql, [id_alumno]);
         res.json(resultados);
-        
+
     } catch (error) {
         console.error('Error al obtener calificaciones:', error);
         res.status(500).json({ error: 'Error al obtener calificaciones' });

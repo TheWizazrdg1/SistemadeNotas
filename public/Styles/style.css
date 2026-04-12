@@ -1,34 +1,94 @@
 /* =========================================
-   1. RESET Y VARIABLES GLOBALES
+   1. RESET Y VARIABLES GLOBALES (Modo Claro Profesional)
    ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
-    --primary: #667eea;
-    --primary-dark: #5568d3;
-    --secondary: #6c757d;
-    --success: #28a745;
-    --danger: #dc3545;
-    --warning: #ffc107;
-    --info: #17a2b8;
-    --light-bg: #f8f9fa;
-    --white: #ffffff;
-    --border: #e0e0e0;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
-    
-    /* Colores de Notas */
-    --nota-alta: #28a745;
-    --nota-media: #ffc107;
-    --nota-baja: #dc3545;
+    /* Fondos Claros Corporativos */
+    --bg-main: #f4f6f9;
+    /* Gris muy claro para el fondo base */
+    --bg-panel: #ffffff;
+    /* Blanco puro para paneles y tarjetas */
+    --bg-card: #ffffff;
+    --bg-hover: #f1f5f9;
+    /* Hover sutil */
+    --border: #cbd5e1;
+    /* Borde gris */
+    --border-light: #e2e8f0;
+
+    /* Texto */
+    --text-main: #1e293b;
+    /* Azul marino muy oscuro / Gris pizarra */
+    --text-muted: #64748b;
+    /* Gris medio */
+
+    /* Acentos Corporativos (Azul Royal, serio, nada pastel) */
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-text: #ffffff;
+
+    /* Colores Semánticos Sólidos (Nada pastel) */
+    --success: #16a34a;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --info: #0284c7;
+
+    /* Notas */
+    --nota-alta: #16a34a;
+    --nota-media: #d97706;
+    --nota-baja: #dc2626;
+
+    /* Sombras y formas para diseño limpio */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius: 6px;
+    --transition: all 0.2s ease-in-out;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+body.dark-mode {
+    --bg-main: #050505;
+    --bg-panel: #121212;
+    --bg-card: #1a1a1a;
+    --bg-hover: #242424;
+    --border: #2a2a2a;
+    --border-light: #333333;
+
+    --text-main: #e5e5e5;
+    --text-muted: #888888;
+
+    --primary: #ffffff;
+    --primary-dark: #cccccc;
+    --primary-text: #000000;
+
+    --success: #2e8b57;
+    --danger: #cf6679;
+    --warning: #f2a900;
+    --info: #64b5f6;
+
+    --nota-alta: #a5d6a7;
+    --nota-media: #ffe082;
+    --nota-baja: #ef9a9a;
+
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background:  #764ba2 100%;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
     min-height: 100vh;
     padding: 20px;
-    color: #333;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* =========================================
@@ -37,18 +97,18 @@ body {
 .container {
     max-width: 1400px;
     margin: 0 auto;
-    background: var(--white);
-    border-radius: 15px;
-    box-shadow: var(--shadow-lg);
+    background: var(--bg-panel);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
     overflow: hidden;
     min-height: 85vh;
 }
 
 .header {
-    background: var(--white);
+    background: var(--bg-panel);
     padding: 20px 30px;
-    border-bottom: 2px solid var(--light-bg);
-    margin-bottom: 0; /* Ajuste para unir con controles */
+    border-bottom: 1px solid var(--border-light);
 }
 
 .header-content {
@@ -60,62 +120,104 @@ body {
 }
 
 .header h1 {
-    font-size: 1.8em;
-    color: var(--primary);
-    margin-bottom: 5px;
+    font-size: 1.6em;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 0.9em;
 }
 
 .user-info {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
 }
 
 /* =========================================
    3. BOTONES Y CONTROLES
    ========================================= */
-.btn, button {
+.btn,
+button {
     padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95em;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    font-size: 0.9em;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    font-family: inherit;
 }
 
-.btn-primary { background: var(--primary); color: var(--white); }
-.btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
+.btn-primary {
+    background: var(--primary);
+    color: var(--primary-text);
+}
 
-.btn-success { background: var(--success); color: var(--white); }
-.btn-success:hover { background: #218838; transform: translateY(-2px); }
+.btn-primary:hover {
+    background: var(--primary-dark);
+    box-shadow: var(--shadow-sm);
+}
 
-.btn-danger, .btn-logout { background: var(--danger); color: var(--white); }
-.btn-danger:hover, .btn-logout:hover { background: #c82333; transform: translateY(-2px); }
+.btn-success {
+    background: transparent;
+    color: var(--success);
+    border: 2px solid var(--success);
+}
 
-.btn-secondary { background: var(--secondary); color: var(--white); }
-.btn-secondary:hover { background: #5a6268; }
-
-/* Botón especial para descargar reporte */
-.btn-download {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+.btn-success:hover {
+    background: var(--success);
     color: white;
-    box-shadow: var(--shadow);
 }
-.btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+
+.btn-danger,
+.btn-logout {
+    background: transparent;
+    color: var(--danger);
+    border: 2px solid var(--danger);
+}
+
+.btn-danger:hover,
+.btn-logout:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-warning {
+    background: transparent;
+    color: var(--warning);
+    border: 2px solid var(--warning);
+}
+
+.btn-warning:hover {
+    background: var(--warning);
+    color: white;
+}
+
+.btn-secondary {
+    background: var(--bg-main);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--border-light);
+}
 
 /* =========================================
    4. FILTROS (Soporte para ambas vistas)
    ========================================= */
-/* Vista Notas (Horizontal) */
 .controls {
     padding: 20px 30px;
-    background: var(--light-bg);
-    border-bottom: 1px solid var(--border);
+    background: var(--bg-hover);
+    border-bottom: 1px solid var(--border-light);
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
@@ -130,7 +232,6 @@ body {
     flex-wrap: wrap;
 }
 
-/* Vista Reporte (Vertical/Grid) */
 .filtros-panel {
     display: flex;
     gap: 15px;
@@ -145,26 +246,37 @@ body {
 }
 
 /* Estilos comunes de inputs */
-select, input[type="text"], input[type="date"], input[type="number"] {
+select,
+input[type="text"],
+input[type="date"],
+input[type="number"],
+input[type="password"] {
     padding: 10px 15px;
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    font-size: 1em;
-    background: var(--white);
-    transition: border-color 0.3s;
-    width: 100%; /* Ajuste para contenedores flexibles */
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.95em;
+    background: var(--bg-panel);
+    color: var(--text-main);
+    transition: var(--transition);
+    width: 100%;
     max-width: 100%;
 }
 
-select:focus, input:focus {
+select:focus,
+input:focus {
     outline: none;
     border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    /* Foco azul */
 }
 
-.filters select { width: auto; min-width: 150px; } /* Excepción para filtros horizontales */
+.filters select {
+    width: auto;
+    min-width: 150px;
+}
 
 /* =========================================
-   5. TABLA PRINCIPAL (NOTAS) - CON STICKY
+   5. TABLAS (NOTAS Y DATOS)
    ========================================= */
 .table-container {
     max-height: 650px;
@@ -175,66 +287,113 @@ select:focus, input:focus {
 
 table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-collapse: collapse;
 }
 
 thead th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: var(--white);
-    padding: 15px 10px;
+    background: var(--bg-main);
+    color: var(--text-muted);
+    padding: 15px 12px;
     text-align: center;
     position: sticky;
     top: 0;
     z-index: 10;
     font-weight: 600;
-    border-right: 1px solid rgba(255,255,255,0.2);
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--border);
 }
 
 /* Columnas Fijas (RUT, Nombre, Curso) */
 .sticky-col {
     position: sticky;
-    background: var(--white);
+    background: var(--bg-main);
     z-index: 5;
-    border-right: 2px solid #eee;
+    border-right: 2px solid var(--border-light);
 }
 
 thead .sticky-col {
-    z-index: 15; /* Mayor que el resto del header */
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: 15;
 }
 
-.rut-col { left: 0; min-width: 110px; }
-.nombre-col { left: 110px; min-width: 220px; text-align: left; }
-.curso-col { left: 330px; min-width: 80px; }
+.rut-col {
+    left: 0;
+    min-width: 110px;
+}
+
+.nombre-col {
+    left: 110px;
+    min-width: 220px;
+    text-align: left;
+}
+
+.curso-col {
+    left: 330px;
+    min-width: 80px;
+}
 
 td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    background: var(--white);
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-panel);
     text-align: center;
+    font-size: 0.9em;
+    color: var(--text-main);
 }
 
-tbody tr:hover td { background-color: #f1f3f5; }
+tbody tr {
+    transition: var(--transition);
+}
 
-/* Estilos de Notas en Tabla */
-.nota { display: inline-block; padding: 6px 10px; border-radius: 6px; font-weight: 700; }
-.nota-alta { background: #d4edda; color: #155724; }
-.nota-media { background: #fff3cd; color: #856404; }
-.nota-baja { background: #f8d7da; color: #721c24; }
-.sin-nota { color: #ccc; font-style: italic; }
+tbody tr:hover td {
+    background-color: var(--bg-hover);
+}
+
+/* Estilos de Notas en Tabla - Fondos sutiles pero claros, bordes para distinguir */
+.nota {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.95em;
+    border-left: 4px solid transparent;
+}
+
+.nota-alta {
+    background: rgba(22, 163, 74, 0.05);
+    color: var(--nota-alta);
+    border-left-color: var(--nota-alta);
+}
+
+.nota-media {
+    background: rgba(217, 119, 6, 0.05);
+    color: var(--nota-media);
+    border-left-color: var(--nota-media);
+}
+
+.nota-baja {
+    background: rgba(220, 38, 38, 0.05);
+    color: var(--nota-baja);
+    border-left-color: var(--nota-baja);
+}
+
+.sin-nota {
+    color: var(--text-muted);
+    font-style: italic;
+}
 
 .input-nota-inline {
     width: 60px;
     text-align: center;
-    border: 2px solid var(--primary);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 4px;
-    font-weight: bold;
+    font-weight: 600;
 }
 
 /* =========================================
-   6. VISTA: REPORTE DE ALUMNO (Tarjetas)
+   6. TARJETAS (REPORTES Y DATOS)
    ========================================= */
 .info-alumno {
     margin: 20px 30px;
@@ -242,27 +401,33 @@ tbody tr:hover td { background-color: #f1f3f5; }
 }
 
 .alumno-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: var(--white);
+    background: var(--bg-panel);
+    border: 1px solid var(--border-light);
     padding: 25px;
-    border-radius: 10px;
-    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
 }
 
-.alumno-card h2 { margin-bottom: 15px; font-size: 1.5em; }
+.alumno-card h2 {
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--primary);
+}
 
 .alumno-detalles {
     display: flex;
     gap: 30px;
     flex-wrap: wrap;
+    color: var(--text-muted);
 }
 
 .promedio-badge {
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--primary);
     padding: 5px 15px;
     border-radius: 20px;
-    font-weight: bold;
-    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--primary-text);
 }
 
 .calificaciones-container {
@@ -272,30 +437,35 @@ tbody tr:hover td { background-color: #f1f3f5; }
 }
 
 .asignatura-card {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    background: var(--bg-panel);
     overflow: hidden;
-    animation: slideIn 0.5s ease;
+    box-shadow: var(--shadow-sm);
 }
 
 .asignatura-header {
-    background: #f8f9fa; /* Gris muy suave */
+    background: var(--bg-hover);
     padding: 15px 20px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-light);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-.asignatura-header h3 { color: #333; margin: 0; font-size: 1.1em; }
+
+.asignatura-header h3 {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-main);
+}
 
 .promedio-asignatura {
-    background: var(--primary);
+    background: var(--text-main);
     color: white;
     padding: 4px 12px;
-    border-radius: 15px;
-    font-weight: bold;
-    font-size: 0.9em;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
 }
 
 /* Grid de notas individuales */
@@ -307,26 +477,56 @@ tbody tr:hover td { background-color: #f1f3f5; }
 }
 
 .nota-item {
-    background: var(--light-bg);
+    background: var(--bg-main);
     padding: 15px;
-    border-radius: 8px;
-    border-left: 4px solid var(--primary);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-light);
     text-align: center;
-    transition: transform 0.2s;
+    transition: var(--transition);
 }
-.nota-item:hover { transform: translateY(-2px); background: #f1f1f1; }
 
-.nota-item h4 { font-size: 0.9em; color: #555; margin-bottom: 5px; height: 40px; overflow: hidden; }
-.nota-valor { font-size: 1.8em; font-weight: bold; display: block; margin: 5px 0; }
+.nota-item:hover {
+    border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+}
 
-.nota-item .nota-alta { color: var(--nota-alta); background: transparent; }
-.nota-item .nota-media { color: var(--nota-media); background: transparent; }
-.nota-item .nota-baja { color: var(--nota-baja); background: transparent; }
+.nota-item h4 {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    height: 35px;
+    overflow: hidden;
+    font-weight: 500;
+}
 
-.nota-fecha, .nota-docente { font-size: 0.8em; color: #888; display: block; }
+.nota-valor {
+    font-size: 1.8em;
+    font-weight: 700;
+    display: block;
+    margin: 10px 0;
+}
+
+.nota-item .nota-alta {
+    color: var(--nota-alta);
+}
+
+.nota-item .nota-media {
+    color: var(--nota-media);
+}
+
+.nota-item .nota-baja {
+    color: var(--nota-baja);
+}
+
+.nota-fecha,
+.nota-docente {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    display: block;
+}
 
 /* =========================================
-   7. VISTA: ANOTACIONES
+   7. ESTADÍSTICAS Y ANOTACIONES
    ========================================= */
 .estadisticas {
     display: flex;
@@ -337,45 +537,76 @@ tbody tr:hover td { background-color: #f1f3f5; }
 }
 
 .stat-item {
-    padding: 15px 25px;
-    border-radius: 10px;
+    padding: 20px 25px;
+    border-radius: var(--radius);
     text-align: center;
-    border: 1px solid transparent;
-    min-width: 120px;
-    background: var(--white);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background: var(--bg-panel);
+    border: 1px solid var(--border-light);
+    min-width: 140px;
+    box-shadow: var(--shadow-sm);
 }
 
-.stat-number { display: block; font-size: 1.5em; font-weight: bold; }
-.stat-label { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-number {
+    display: block;
+    font-size: 2em;
+    font-weight: 700;
+    color: var(--text-main);
+}
 
-/* Colores Anotaciones */
-.stat-item.positiva { background: #d4edda; color: #155724; border-color: #c3e6cb; }
-.stat-item.negativa { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-.stat-item.informativa { background: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+.stat-label {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.stat-item.positiva {
+    border-top: 4px solid var(--success);
+}
+
+.stat-item.negativa {
+    border-top: 4px solid var(--danger);
+}
+
+.stat-item.informativa {
+    border-top: 4px solid var(--info);
+}
 
 .anotacion-card {
-    background: var(--white);
-    border-radius: 8px;
+    background: var(--bg-panel);
+    border-radius: var(--radius);
     padding: 20px;
     margin-bottom: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    border-left: 5px solid #ccc;
-    position: relative;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
 }
 
-.anotacion-card.positiva { border-left-color: var(--success); background: #f8fff9; }
-.anotacion-card.negativa { border-left-color: var(--danger); background: #fff8f8; }
-.anotacion-card.informativa { border-left-color: var(--info); background: #f0fbff; }
+.anotacion-card.positiva {
+    border-left: 4px solid var(--success);
+}
+
+.anotacion-card.negativa {
+    border-left: 4px solid var(--danger);
+}
+
+.anotacion-card.informativa {
+    border-left: 4px solid var(--info);
+}
 
 .anotacion-header {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
-    font-size: 0.9em;
-    color: #666;
+    font-size: 0.85em;
+    color: var(--text-muted);
 }
-.anotacion-tipo { font-weight: bold; text-transform: uppercase; }
+
+.anotacion-tipo {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 
 /* =========================================
    8. MODALES
@@ -388,90 +619,284 @@ tbody tr:hover td { background-color: #f1f3f5; }
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.6);
-    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Fondo modal oscuro tenue */
     animation: fadeIn 0.3s;
 }
 
 .modal-content {
-    background-color: var(--white);
+    background-color: var(--bg-panel);
     margin: 5% auto;
     width: 90%;
     max-width: 500px;
-    border-radius: 15px;
+    border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     animation: slideIn 0.3s;
     position: relative;
+    overflow: hidden;
 }
 
 .modal-content h2 {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: var(--white);
+    background: var(--bg-hover);
     padding: 20px;
     margin: 0;
-    font-size: 1.4em;
-    text-align: center;
-    border-radius: 15px 15px 0 0;
+    font-size: 1.25em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-main);
 }
 
-.modal-body { padding: 30px; }
-.modal-body label { display: block; margin-top: 15px; font-weight: 600; color: #555; }
+.modal-body {
+    padding: 30px;
+}
 
-.close, .close-eval, .close-edit-eval {
+.modal-body label {
+    display: block;
+    margin-top: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.close,
+.close-eval,
+.close-edit-eval {
     position: absolute;
     right: 20px;
-    top: 15px;
-    color: var(--white);
-    font-size: 28px;
-    font-weight: bold;
+    top: 20px;
+    color: var(--text-muted);
+    font-size: 24px;
     cursor: pointer;
     z-index: 2100;
+    transition: color 0.2s;
+}
+
+.close:hover,
+.close-eval:hover,
+.close-edit-eval:hover {
+    color: var(--danger);
 }
 
 /* =========================================
-   9. ANIMACIONES Y OTROS
+   9. PÁGINA DE INICIO DE SESIÓN
    ========================================= */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.login-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-main);
+}
 
-.loading, .error, .no-data {
+.login-form {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-light);
+    padding: 50px 40px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 420px;
+}
+
+.login-form h3 {
+    font-size: 1.8em;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
+}
+
+.login-form .form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.login-form label {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.login-form input {
+    margin-bottom: 0;
+}
+
+.login-form .btn-primary {
+    width: 100%;
+    padding: 12px;
+    font-size: 1em;
+    margin-top: 15px;
+}
+
+.error-msg {
+    color: var(--danger);
+    background: rgba(220, 38, 38, 0.1);
+    padding: 10px;
+    border-radius: var(--radius);
+    border-left: 4px solid var(--danger);
+    font-size: 0.9em;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+/* Ocultar/Mostrar Contraseña */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    padding-right: 40px;
+    /* Espacio para el icono */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.2em;
+    /* Emoticons o SVG */
+    padding: 0;
+}
+
+.toggle-password:hover {
+    color: var(--primary);
+}
+
+/* =========================================
+   10. ANIMACIONES Y OTROS
+   ========================================= */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.loading,
+.error,
+.no-data {
     text-align: center;
     padding: 40px;
-    color: var(--secondary);
-    font-size: 1.1em;
+    color: var(--text-muted);
+    font-weight: 500;
 }
 
 .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--primary);
+    border: 3px solid var(--border-light);
+    border-top: 3px solid var(--primary);
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
     animation: spin 1s linear infinite;
     margin: 0 auto 15px;
 }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* Mensajes flotantes (Toasts) */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 .mensaje-exito {
     position: fixed;
     top: 20px;
     right: 20px;
     background: var(--success);
-    color: var(--white);
+    color: white;
     padding: 15px 25px;
-    border-radius: 8px;
-    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
     z-index: 3000;
     animation: slideIn 0.3s;
+    font-weight: 500;
+}
+
+/* Botón flotante para Dark Mode (en caso de usarlo así) */
+.btn-dark-mode {
+    background: var(--bg-hover);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 1.2em;
+}
+
+.btn-dark-mode:hover {
+    background: var(--border-light);
+    transform: scale(1.05);
+}
+
+.btn-dark-mode-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 4000;
+    box-shadow: var(--shadow-md);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .header-content { flex-direction: column; align-items: flex-start; }
-    .controls, .filtros-panel { flex-direction: column; align-items: stretch; }
-    .table-container { max-height: none; overflow-x: auto; }
-    .sticky-col { position: static; border: none; } /* En móvil quitamos sticky horizontal */
-    .notas-grid { grid-template-columns: 1fr; }
-    .alumno-detalles { flex-direction: column; gap: 10px; }
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .controls,
+    .filtros-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .table-container {
+        max-height: none;
+        overflow-x: auto;
+    }
+
+    .sticky-col {
+        position: static;
+        border: none;
+    }
+
+    .notas-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .alumno-detalles {
+        flex-direction: column;
+        gap: 10px;
+    }
 }

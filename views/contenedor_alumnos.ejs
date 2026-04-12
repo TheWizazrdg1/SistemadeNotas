@@ -1,24 +1,31 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Alumnos</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    
+
     <style>
         /* Tema morado institucional */
-        nav { background: linear-gradient( #04144a 100%); }
-        .modal h4 { color: #667eea; }
-        
+        nav {
+            background: linear-gradient(#04144a 100%);
+        }
+
+        .modal h4 {
+            color: #667eea;
+        }
+
         /* Ajuste para Tabla con Scroll y Header Fijo */
         .table-container {
             max-height: 60vh;
             overflow: auto;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
         }
+
         thead th {
             position: sticky;
             top: 0;
@@ -28,6 +35,7 @@
         }
     </style>
 </head>
+
 <body class="grey lighten-4">
 
     <nav>
@@ -40,17 +48,18 @@
                 <li><a href="/cursos"><i class="material-icons left">class</i>Cursos</a></li>
                 <li><a href="/profesores"><i class="material-icons left">assignment_ind</i>Profesores</a></li>
                 <li><a href="/notas"><i class="material-icons left">assessment</i>Notas</a></li>
-                <li><a href="/logout" class="red darken-3 waves-effect waves-light btn"><i class="material-icons left">exit_to_app</i>Salir</a></li>
+                <li><a href="/logout" class="red darken-3 waves-effect waves-light btn"><i
+                            class="material-icons left">exit_to_app</i>Salir</a></li>
             </ul>
         </div>
     </nav>
 
     <div class="container" style="margin-top: 20px; width: 95%; max-width: 1200px;">
-        
+
         <div class="card-panel">
             <h5 class="center-align" style="color: #495057; font-weight: 600;">➕ Registrar Nuevo Alumno</h5>
-           <form action="/crear_alumno" method="POST" class="row" style="margin-bottom: 0;">
-                
+            <form action="/crear_alumno" method="POST" class="row" style="margin-bottom: 0;">
+
                 <div class="input-field col s12 m6 l2">
                     <i class="material-icons prefix">badge</i>
                     <input id="rut" name="rut" type="text" class="validate" required placeholder="Ej: 12.345.678-9">
@@ -84,15 +93,18 @@
                     <i class="material-icons prefix">class</i>
                     <select name="curso_id" required>
                         <option value="" disabled selected>Selecciona un curso</option>
-                        <% cursos.forEach(c => { %>
-                            <option value="<%= c.id_curso %>"><%= c.grado %>° <%= c.nombre_curso %></option>
-                        <% }) %>
+                        <% cursos.forEach(c=> { %>
+                            <option value="<%= c.id_curso %>">
+                                <%= c.grado %>° <%= c.nombre_curso %>
+                            </option>
+                            <% }) %>
                     </select>
                     <label>Asignar Curso</label>
                 </div>
 
                 <div class="input-field col s12 m4 l4 center-align">
-                    <button class="btn waves-effect waves-light green darken-1" id="btnGuardarAlumno" type="submit" style="width: 100%; height: 45px;">
+                    <button class="btn waves-effect waves-light green darken-1" id="btnGuardarAlumno" type="submit"
+                        style="width: 100%; height: 45px;">
                         Guardar Alumno
                         <i class="material-icons right">add_circle</i>
                     </button>
@@ -121,48 +133,57 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <% if (alumnos && alumnos.length > 0) { %>
-                        <% alumnos.forEach(a => { %>
-                        <tr>
-                            <td style="font-weight: bold;"><%= a.rut %></td>
-                            <td><%= a.nombres %></td>
-                            <td><%= a.apellido_paterno %> <%= a.apellido_materno || '' %></td>
-                            <td><%= new Date(a.fecha_nacimiento).toLocaleDateString('es-CL') %></td> 
-                            <td>
-                                <% if(a.nombre_curso) { %>
-                                    <span style="font-weight: bold; color: #667eea;"><%= a.grado %>° <%= a.nombre_curso %></span>
+                    <% if (alumnos && alumnos.length> 0) { %>
+                        <% alumnos.forEach(a=> { %>
+                            <tr>
+                                <td style="font-weight: bold;">
+                                    <%= a.rut %>
+                                </td>
+                                <td>
+                                    <%= a.nombres %>
+                                </td>
+                                <td>
+                                    <%= a.apellido_paterno %>
+                                        <%= a.apellido_materno || '' %>
+                                </td>
+                                <td>
+                                    <%= new Date(a.fecha_nacimiento).toLocaleDateString('es-CL') %>
+                                </td>
+                                <td>
+                                    <% if(a.nombre_curso) { %>
+                                        <span style="font-weight: bold; color: #667eea;">
+                                            <%= a.grado %>° <%= a.nombre_curso %>
+                                        </span>
+                                        <% } else { %>
+                                            <span class="grey-text"><i>Sin Asignar</i></span>
+                                            <% } %>
+                                </td>
+                                <td>
+                                    <a href="#modalEdicionAlumno"
+                                        class="btn-small amber darken-2 modal-trigger waves-effect waves-light"
+                                        onclick="cargarAlumno('<%= a.id_alumno %>', '<%= a.rut %>', '<%= a.nombres %>', '<%= a.apellido_paterno %>', '<%= a.apellido_materno %>', '<%= a.fecha_nacimiento %>', '<%= a.curso_id %>')">
+                                        <i class="material-icons">edit</i>
+                                    </a>
+                                    <a href="/borrar_alumno/<%= a.id_alumno %>"
+                                        class="btn-small red darken-2 waves-effect waves-light"
+                                        onclick="return confirm('¿Seguro que deseas desactivar a <%= a.nombres %> <%= a.apellido_paterno %>?');">
+                                        <i class="material-icons">delete</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <% }) %>
                                 <% } else { %>
-                                    <span class="grey-text"><i>Sin Asignar</i></span>
-                                <% } %>
-                            </td>
-                            <td>
-                                <a href="#modalEdicionAlumno" 
-                               
-                                   class="btn-small amber darken-2 modal-trigger waves-effect waves-light" 
-                                   onclick="cargarAlumno('<%= a.id_alumno %>', '<%= a.rut %>', '<%= a.nombres %>', '<%= a.apellido_paterno %>', '<%= a.apellido_materno %>', '<%= a.fecha_nacimiento %>', '<%= a.curso_id %>')"
-                                >
-                                   <i class="material-icons">edit</i>
-                                </a>
-                                <a href="/borrar_alumno/<%= a.id_alumno %>" 
-                                   class="btn-small red darken-2 waves-effect waves-light" 
-                                   onclick="return confirm('¿Seguro que deseas desactivar a <%= a.nombres %> <%= a.apellido_paterno %>?');">
-                                    <i class="material-icons">delete</i>
-                                </a>
-                            </td>
-                        </tr>
-                        <% }) %>
-                    <% } else { %>
-                        <tr>
-                            <td colspan="6" class="grey-text center-align" style="padding: 20px;">
-                                No hay alumnos registrados en el sistema.
-                            </td>
-                        </tr>
-                    <% } %>
+                                    <tr>
+                                        <td colspan="6" class="grey-text center-align" style="padding: 20px;">
+                                            No hay alumnos registrados en el sistema.
+                                        </td>
+                                    </tr>
+                                    <% } %>
                 </tbody>
             </table>
         </div>
-    </div> 
-    
+    </div>
+
     <div id="modalEdicionAlumno" class="modal" style="max-width: 600px; border-radius: 8px;">
         <form action="/editar_alumno" method="POST">
             <div class="modal-content">
@@ -182,14 +203,15 @@
                         <label for="fecha_editar">Fecha de Nacimiento</label>
                     </div>
 
-                   <div class="input-field col s12">
+                    <div class="input-field col s12">
                         <i class="material-icons prefix">person</i>
                         <input id="nombre_editar" name="nombres" type="text" class="validate" required>
                         <label for="nombre_editar">Nombres</label>
                     </div>
 
                     <div class="input-field col s12 m6">
-                        <input id="apellido_paterno_editar" name="apellido_paterno" type="text" class="validate" required>
+                        <input id="apellido_paterno_editar" name="apellido_paterno" type="text" class="validate"
+                            required>
                         <label for="apellido_paterno_editar">Apellido Paterno</label>
                     </div>
 
@@ -202,237 +224,241 @@
                         <i class="material-icons prefix">class</i>
                         <select name="curso_id" id="curso_editar" required>
                             <option value="" disabled selected>Selecciona un curso</option>
-                            <% cursos.forEach(c => { %>
-                                <option value="<%= c.id_curso %>"><%= c.grado %>° <%= c.nombre_curso %></option>
-                            <% }) %>
+                            <% cursos.forEach(c=> { %>
+                                <option value="<%= c.id_curso %>">
+                                    <%= c.grado %>° <%= c.nombre_curso %>
+                                </option>
+                                <% }) %>
                         </select>
                         <label>Curso</label>
                     </div>
                 </div>
             </div>
-            
+
             <div class="modal-footer">
                 <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancelar</a>
-                <button id="btnGuardarEdicion" type="submit" class="waves-effect waves-green btn blue darken-1">Guardar Cambios</button>
+                <button id="btnGuardarEdicion" type="submit" class="waves-effect waves-green btn blue darken-1">Guardar
+                    Cambios</button>
             </div>
         </form>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-      
-
-      document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar Materialize (Modales, Selects, etc)
-    M.AutoInit();
-
-    // ==========================================
-    // 1. FUNCIONES AUXILIARES DE RUT LOCALES
-    // ==========================================
-    const filasTabla = document.querySelectorAll('table tbody tr');
-    const rutsExistentes = [];
-    
-    filasTabla.forEach(fila => {
-        if (fila.cells.length > 1) {
-            const rutEnTabla = fila.cells[0].textContent.trim();
-            rutsExistentes.push(rutEnTabla);
-        }
-    });
-    
-    const limpiarRut = (rut) => rut.replace(/[^0-9kK]/g, '').toUpperCase();
-    const rutsLimpios = rutsExistentes.map(limpiarRut);
-
-    function validarRutMatematico(rut) {
-        let valor = limpiarRut(rut);
-        if (valor.length < 8) return false;
-
-        let cuerpo = valor.slice(0, -1);
-        let dv = valor.slice(-1);
-
-        let suma = 0;
-        let multiplo = 2;
-
-        for (let i = 1; i <= cuerpo.length; i++) {
-            let index = multiplo * valor.charAt(cuerpo.length - i);
-            suma = suma + index;
-            multiplo = multiplo < 7 ? multiplo + 1 : 2;
-        }
-
-        let dvEsperado = 11 - (suma % 11);
-        dvEsperado = (dvEsperado == 11) ? 0 : dvEsperado;
-        dvEsperado = (dvEsperado == 10) ? "K" : dvEsperado.toString();
-
-        return dvEsperado === dv;
-    }
 
 
-    // ==========================================
-    // 2. VALIDACIÓN: MODAL CREAR ALUMNO
-    // ==========================================
-    const inputRut = document.getElementById('rut');
-    const btnGuardar = document.getElementById('btnGuardarAlumno');
-    
-    if(btnGuardar) {
-        btnGuardar.disabled = true;
-        btnGuardar.classList.replace('green', 'grey');
-    }
+        document.addEventListener('DOMContentLoaded', function () {
+            // Inicializar Materialize (Modales, Selects, etc)
+            M.AutoInit();
 
-    if(inputRut && btnGuardar) {
-        inputRut.addEventListener('input', function() {
-            const rutLimpio = limpiarRut(this.value);
-            
-            if (rutLimpio.length >= 8) {
-                const esValido = validarRutMatematico(this.value);
-                const esDuplicado = rutsLimpios.includes(rutLimpio);
+            // ==========================================
+            // 1. FUNCIONES AUXILIARES DE RUT LOCALES
+            // ==========================================
+            const filasTabla = document.querySelectorAll('table tbody tr');
+            const rutsExistentes = [];
 
-                if (!esValido) {
-                    btnGuardar.disabled = true;
-                    btnGuardar.classList.replace('green', 'grey');
-                    this.classList.add('invalid');
-                    this.classList.remove('valid');
-                } else if (esDuplicado) {
-                    btnGuardar.disabled = true;
-                    btnGuardar.classList.replace('green', 'grey');
-                    this.classList.add('invalid');
-                    this.classList.remove('valid');
-                    M.toast({html: '⚠️ Este RUT ya está registrado', classes: 'red rounded'});
-                } else {
-                    btnGuardar.disabled = false;
-                    btnGuardar.classList.replace('grey', 'green');
-                    this.classList.remove('invalid');
-                    this.classList.add('valid');
-                }
-            } else {
-                btnGuardar.disabled = true;
-                btnGuardar.classList.replace('green', 'grey');
-                this.classList.remove('invalid', 'valid');
-            }
-        });
-
-        inputRut.addEventListener('blur', function() {
-            const rutLimpio = limpiarRut(this.value);
-            if (rutLimpio.length >= 8 && !validarRutMatematico(this.value)) {
-                M.toast({html: '❌ El RUT ingresado no es válido', classes: 'red rounded'});
-            }
-        });
-    }
-
-
-    // ==========================================
-    // 3. VALIDACIÓN: MODAL EDITAR ALUMNO
-    // ==========================================
-    const inputRutEditar = document.getElementById('rut_editar');
-    const btnGuardarEdicion = document.getElementById('btnGuardarEdicion'); 
-
-    // Aquí está el arreglo: Ya no pedimos window.RutValidator, usamos tu función local
-    if (inputRutEditar) { 
-        inputRutEditar.addEventListener('input', function() {
-            const rutLimpio = limpiarRut(this.value); // Usamos la local
-
-            if (rutLimpio.length >= 8) {
-                const esValido = validarRutMatematico(this.value); // Usamos la local
-
-                if (esValido) {
-                    this.classList.remove('invalid');
-                    this.classList.add('valid');
-                    if (btnGuardarEdicion) {
-                        btnGuardarEdicion.disabled = false;
-                        btnGuardarEdicion.classList.remove('grey');
-                        btnGuardarEdicion.classList.add('blue', 'darken-1');
-                    }
-                } else {
-                    this.classList.remove('valid');
-                    this.classList.add('invalid');
-                    if (btnGuardarEdicion) {
-                        btnGuardarEdicion.disabled = true;
-                        btnGuardarEdicion.classList.remove('blue', 'darken-1');
-                        btnGuardarEdicion.classList.add('grey');
-                    }
-                }
-            } else {
-                this.classList.remove('valid', 'invalid');
-                if (btnGuardarEdicion) {
-                    btnGuardarEdicion.disabled = true;
-                    btnGuardarEdicion.classList.remove('blue', 'darken-1');
-                    btnGuardarEdicion.classList.add('grey');
-                }
-            }
-        });
-
-        inputRutEditar.addEventListener('blur', function() {
-            const rutLimpio = limpiarRut(this.value);
-            if (rutLimpio.length >= 8 && !validarRutMatematico(this.value)) {
-                M.toast({html: '❌ El RUT ingresado es inválido', classes: 'red rounded'});
-            }
-        });
-    }
-
-
-    // ==========================================
-    // 4. BUSCADOR EN TIEMPO REAL
-    // ==========================================
-    const inputBusqueda = document.getElementById('buscador_alumnos');
-    if(inputBusqueda) {
-        inputBusqueda.addEventListener('keyup', function() {
-            const texto = this.value.toLowerCase();
-            const filas = document.querySelectorAll('table tbody tr');
-            
-            filas.forEach(fila => {
-                if(fila.cells.length === 1) return; 
-
-                const rut = fila.cells[0].textContent.toLowerCase();
-                const nombre = fila.cells[1].textContent.toLowerCase();
-                const apellido = fila.cells[2].textContent.toLowerCase();
-                
-                if(rut.includes(texto) || nombre.includes(texto) || apellido.includes(texto)) {
-                    fila.style.display = ''; 
-                } else {
-                    fila.style.display = 'none'; 
+            filasTabla.forEach(fila => {
+                if (fila.cells.length > 1) {
+                    const rutEnTabla = fila.cells[0].textContent.trim();
+                    rutsExistentes.push(rutEnTabla);
                 }
             });
+
+            const limpiarRut = (rut) => rut.replace(/[^0-9kK]/g, '').toUpperCase();
+            const rutsLimpios = rutsExistentes.map(limpiarRut);
+
+            function validarRutMatematico(rut) {
+                let valor = limpiarRut(rut);
+                if (valor.length < 8) return false;
+
+                let cuerpo = valor.slice(0, -1);
+                let dv = valor.slice(-1);
+
+                let suma = 0;
+                let multiplo = 2;
+
+                for (let i = 1; i <= cuerpo.length; i++) {
+                    let index = multiplo * valor.charAt(cuerpo.length - i);
+                    suma = suma + index;
+                    multiplo = multiplo < 7 ? multiplo + 1 : 2;
+                }
+
+                let dvEsperado = 11 - (suma % 11);
+                dvEsperado = (dvEsperado == 11) ? 0 : dvEsperado;
+                dvEsperado = (dvEsperado == 10) ? "K" : dvEsperado.toString();
+
+                return dvEsperado === dv;
+            }
+
+
+            // ==========================================
+            // 2. VALIDACIÓN: MODAL CREAR ALUMNO
+            // ==========================================
+            const inputRut = document.getElementById('rut');
+            const btnGuardar = document.getElementById('btnGuardarAlumno');
+
+            if (btnGuardar) {
+                btnGuardar.disabled = true;
+                btnGuardar.classList.replace('green', 'grey');
+            }
+
+            if (inputRut && btnGuardar) {
+                inputRut.addEventListener('input', function () {
+                    const rutLimpio = limpiarRut(this.value);
+
+                    if (rutLimpio.length >= 8) {
+                        const esValido = validarRutMatematico(this.value);
+                        const esDuplicado = rutsLimpios.includes(rutLimpio);
+
+                        if (!esValido) {
+                            btnGuardar.disabled = true;
+                            btnGuardar.classList.replace('green', 'grey');
+                            this.classList.add('invalid');
+                            this.classList.remove('valid');
+                        } else if (esDuplicado) {
+                            btnGuardar.disabled = true;
+                            btnGuardar.classList.replace('green', 'grey');
+                            this.classList.add('invalid');
+                            this.classList.remove('valid');
+                            M.toast({ html: '⚠️ Este RUT ya está registrado', classes: 'red rounded' });
+                        } else {
+                            btnGuardar.disabled = false;
+                            btnGuardar.classList.replace('grey', 'green');
+                            this.classList.remove('invalid');
+                            this.classList.add('valid');
+                        }
+                    } else {
+                        btnGuardar.disabled = true;
+                        btnGuardar.classList.replace('green', 'grey');
+                        this.classList.remove('invalid', 'valid');
+                    }
+                });
+
+                inputRut.addEventListener('blur', function () {
+                    const rutLimpio = limpiarRut(this.value);
+                    if (rutLimpio.length >= 8 && !validarRutMatematico(this.value)) {
+                        M.toast({ html: '❌ El RUT ingresado no es válido', classes: 'red rounded' });
+                    }
+                });
+            }
+
+
+            // ==========================================
+            // 3. VALIDACIÓN: MODAL EDITAR ALUMNO
+            // ==========================================
+            const inputRutEditar = document.getElementById('rut_editar');
+            const btnGuardarEdicion = document.getElementById('btnGuardarEdicion');
+
+            // Aquí está el arreglo: Ya no pedimos window.RutValidator, usamos tu función local
+            if (inputRutEditar) {
+                inputRutEditar.addEventListener('input', function () {
+                    const rutLimpio = limpiarRut(this.value); // Usamos la local
+
+                    if (rutLimpio.length >= 8) {
+                        const esValido = validarRutMatematico(this.value); // Usamos la local
+
+                        if (esValido) {
+                            this.classList.remove('invalid');
+                            this.classList.add('valid');
+                            if (btnGuardarEdicion) {
+                                btnGuardarEdicion.disabled = false;
+                                btnGuardarEdicion.classList.remove('grey');
+                                btnGuardarEdicion.classList.add('blue', 'darken-1');
+                            }
+                        } else {
+                            this.classList.remove('valid');
+                            this.classList.add('invalid');
+                            if (btnGuardarEdicion) {
+                                btnGuardarEdicion.disabled = true;
+                                btnGuardarEdicion.classList.remove('blue', 'darken-1');
+                                btnGuardarEdicion.classList.add('grey');
+                            }
+                        }
+                    } else {
+                        this.classList.remove('valid', 'invalid');
+                        if (btnGuardarEdicion) {
+                            btnGuardarEdicion.disabled = true;
+                            btnGuardarEdicion.classList.remove('blue', 'darken-1');
+                            btnGuardarEdicion.classList.add('grey');
+                        }
+                    }
+                });
+
+                inputRutEditar.addEventListener('blur', function () {
+                    const rutLimpio = limpiarRut(this.value);
+                    if (rutLimpio.length >= 8 && !validarRutMatematico(this.value)) {
+                        M.toast({ html: '❌ El RUT ingresado es inválido', classes: 'red rounded' });
+                    }
+                });
+            }
+
+
+            // ==========================================
+            // 4. BUSCADOR EN TIEMPO REAL
+            // ==========================================
+            const inputBusqueda = document.getElementById('buscador_alumnos');
+            if (inputBusqueda) {
+                inputBusqueda.addEventListener('keyup', function () {
+                    const texto = this.value.toLowerCase();
+                    const filas = document.querySelectorAll('table tbody tr');
+
+                    filas.forEach(fila => {
+                        if (fila.cells.length === 1) return;
+
+                        const rut = fila.cells[0].textContent.toLowerCase();
+                        const nombre = fila.cells[1].textContent.toLowerCase();
+                        const apellido = fila.cells[2].textContent.toLowerCase();
+
+                        if (rut.includes(texto) || nombre.includes(texto) || apellido.includes(texto)) {
+                            fila.style.display = '';
+                        } else {
+                            fila.style.display = 'none';
+                        }
+                    });
+                });
+            }
         });
-    }
-});
 
-// ==========================================
-// 5. FUNCIÓN CARGAR ALUMNO AL MODAL
-// ==========================================
-// Esta función debe quedar AFUERA del DOMContentLoaded para que el HTML la pueda ver
-function cargarAlumno(id, rut, nombres, apellidoPaterno, apellidoMaterno, fechaNacimiento, cursoId) {
-    document.getElementById('id_alumno_editar').value = id;
-    
-    // Pasamos el RUT directo sin formateador externo
-    const inputRut = document.getElementById('rut_editar');
-    inputRut.value = rut;
-    inputRut.classList.add('valid'); 
-    inputRut.classList.remove('invalid');
+        // ==========================================
+        // 5. FUNCIÓN CARGAR ALUMNO AL MODAL
+        // ==========================================
+        // Esta función debe quedar AFUERA del DOMContentLoaded para que el HTML la pueda ver
+        function cargarAlumno(id, rut, nombres, apellidoPaterno, apellidoMaterno, fechaNacimiento, cursoId) {
+            document.getElementById('id_alumno_editar').value = id;
 
-    // Desbloqueamos el botón por defecto al abrir (porque viene válido de la BD)
-    const btnGuardarEdicion = document.getElementById('btnGuardarEdicion');
-    if(btnGuardarEdicion) {
-        btnGuardarEdicion.disabled = false;
-        btnGuardarEdicion.classList.remove('grey');
-        btnGuardarEdicion.classList.add('blue', 'darken-1');
-    }
+            // Pasamos el RUT directo sin formateador externo
+            const inputRut = document.getElementById('rut_editar');
+            inputRut.value = rut;
+            inputRut.classList.add('valid');
+            inputRut.classList.remove('invalid');
 
-    document.getElementById('nombre_editar').value = nombres;
-    document.getElementById('apellido_paterno_editar').value = apellidoPaterno;
-    document.getElementById('apellido_materno_editar').value = apellidoMaterno !== 'null' ? apellidoMaterno : '';
+            // Desbloqueamos el botón por defecto al abrir (porque viene válido de la BD)
+            const btnGuardarEdicion = document.getElementById('btnGuardarEdicion');
+            if (btnGuardarEdicion) {
+                btnGuardarEdicion.disabled = false;
+                btnGuardarEdicion.classList.remove('grey');
+                btnGuardarEdicion.classList.add('blue', 'darken-1');
+            }
 
-    if (fechaNacimiento && fechaNacimiento !== 'null') {
-        const fecha = new Date(fechaNacimiento);
-        fecha.setMinutes(fecha.getMinutes() + fecha.getTimezoneOffset());
-        document.getElementById('fecha_editar').value = fecha.toISOString().split('T')[0];
-    }
+            document.getElementById('nombre_editar').value = nombres;
+            document.getElementById('apellido_paterno_editar').value = apellidoPaterno;
+            document.getElementById('apellido_materno_editar').value = apellidoMaterno !== 'null' ? apellidoMaterno : '';
 
-    const selectCurso = document.getElementById('curso_editar');
-    selectCurso.value = cursoId;
+            if (fechaNacimiento && fechaNacimiento !== 'null') {
+                const fecha = new Date(fechaNacimiento);
+                fecha.setMinutes(fecha.getMinutes() + fecha.getTimezoneOffset());
+                document.getElementById('fecha_editar').value = fecha.toISOString().split('T')[0];
+            }
 
-    if (typeof M !== 'undefined') {
-        M.updateTextFields();
-        M.FormSelect.init(selectCurso);
-    }
-}
+            const selectCurso = document.getElementById('curso_editar');
+            selectCurso.value = cursoId;
+
+            if (typeof M !== 'undefined') {
+                M.updateTextFields();
+                M.FormSelect.init(selectCurso);
+            }
+        }
     </script>
 </body>
+
 </html>

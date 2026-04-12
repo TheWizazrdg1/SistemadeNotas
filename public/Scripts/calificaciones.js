@@ -51,17 +51,17 @@ async function cargarCursos() {
     try {
         const response = await fetch(`${API_URL}/cursos`);
         if (!response.ok) throw new Error('Error al cargar cursos');
-        
+
         const cursos = await response.json();
-        
+
         const grados = new Set();
         const letras = new Set();
-        
+
         cursos.forEach(curso => {
             grados.add(curso.grado);
             letras.add(curso.nombre_curso);
         });
-        
+
         filtroCurso.innerHTML = '<option value="">Todos los cursos</option>';
         Array.from(grados).sort((a, b) => a - b).forEach(grado => {
             const option = document.createElement('option');
@@ -69,7 +69,7 @@ async function cargarCursos() {
             option.textContent = `${grado}° Medio`;
             filtroCurso.appendChild(option);
         });
-        
+
         filtroLetra.innerHTML = '<option value="">Todas</option>';
         Array.from(letras).sort().forEach(letra => {
             const option = document.createElement('option');
@@ -78,7 +78,7 @@ async function cargarCursos() {
             filtroLetra.appendChild(option);
         });
         M.FormSelect.init(document.querySelectorAll('select'));
-        
+
     } catch (error) {
         console.error('Error al cargar cursos:', error);
     }
@@ -89,9 +89,9 @@ async function cargarAsignaturas() {
     try {
         const response = await fetch(`${API_URL}/asignaturas`);
         if (!response.ok) throw new Error('Error al cargar asignaturas');
-        
+
         todasLasAsignaturas = await response.json();
-        
+
         filtroAsignatura.innerHTML = '<option value="">Todas las asignaturas</option>';
         todasLasAsignaturas.forEach(asig => {
             const option = document.createElement('option');
@@ -100,7 +100,7 @@ async function cargarAsignaturas() {
             filtroAsignatura.appendChild(option);
         });
         M.FormSelect.init(document.querySelectorAll('select'));
-        
+
     } catch (error) {
         console.error('Error al cargar asignaturas:', error);
     }
@@ -111,10 +111,10 @@ async function cargarAlumnos() {
     try {
         const response = await fetch(`${API_URL}/alumnos`);
         if (!response.ok) throw new Error('Error al cargar alumnos');
-        
+
         todosLosAlumnos = await response.json();
         aplicarFiltrosAlumnos();
-        
+
         if (window.RutValidator && window.RutValidator.BuscadorRut) {
             new window.RutValidator.BuscadorRut({
                 inputElement: inputBuscarRut,
@@ -126,7 +126,7 @@ async function cargarAlumnos() {
             });
             M.FormSelect.init(document.querySelectorAll('select'));
         }
-        
+
     } catch (error) {
         console.error('Error:', error);
         mostrarError('Error al cargar la lista de alumnos');
@@ -137,13 +137,13 @@ if (btnBuscarRut) {
     btnBuscarRut.addEventListener('click', () => {
         const rutIngresado = inputBuscarRut.value;
         const rutLimpio = window.RutValidator.limpiar(rutIngresado);
-        
+
         if (rutLimpio.length < 2) {
             alert('Por favor ingrese un RUT válido');
             return;
         }
 
-        const alumnoEncontrado = todosLosAlumnos.find(a => 
+        const alumnoEncontrado = todosLosAlumnos.find(a =>
             window.RutValidator.limpiar(a.rut) === rutLimpio
         );
 
@@ -158,7 +158,7 @@ if (btnBuscarRut) {
 function seleccionarAlumnoDirecto(alumno) {
     filtroCurso.value = '';
     filtroLetra.value = '';
-    
+
     filtroAlumno.innerHTML = '<option value="">Seleccionar alumno...</option>';
     todosLosAlumnos.forEach(a => {
         const option = document.createElement('option');
@@ -174,30 +174,30 @@ function seleccionarAlumnoDirecto(alumno) {
 function aplicarFiltrosAlumnos() {
     const gradoSeleccionado = filtroCurso.value;
     const letraSeleccionada = filtroLetra.value;
-    
+
     let alumnosFiltrados = todosLosAlumnos;
-    
+
     if (gradoSeleccionado) {
-        alumnosFiltrados = alumnosFiltrados.filter(alumno => 
+        alumnosFiltrados = alumnosFiltrados.filter(alumno =>
             alumno.grado == gradoSeleccionado
         );
     }
-    
+
     if (letraSeleccionada) {
-        alumnosFiltrados = alumnosFiltrados.filter(alumno => 
+        alumnosFiltrados = alumnosFiltrados.filter(alumno =>
             alumno.nombre_curso === letraSeleccionada
         );
     }
-    
+
     filtroAlumno.innerHTML = '<option value="">Seleccionar alumno...</option>';
-    
+
     alumnosFiltrados.forEach(alumno => {
         const option = document.createElement('option');
         option.value = alumno.id_alumno;
         option.textContent = `${alumno.apellido_paterno} ${alumno.apellido_materno || ''}, ${alumno.nombres}${alumno.grado ? ` - ${alumno.grado}° ${alumno.nombre_curso}` : ''}`;
         filtroAlumno.appendChild(option);
     });
-    
+
     const alumnoActual = filtroAlumno.value;
     if (alumnoActual && !alumnosFiltrados.find(a => a.id_alumno == alumnoActual)) {
         filtroAlumno.value = '';
@@ -207,28 +207,28 @@ function aplicarFiltrosAlumnos() {
 
 async function cargarCalificaciones() {
     const idAlumno = filtroAlumno.value;
-    
+
     if (!idAlumno) {
         limpiarVista();
         return;
     }
-    
+
     try {
         mostrarCargando();
-        
+
         const response = await fetch(`${API_URL}/calificaciones/${idAlumno}`);
         if (!response.ok) throw new Error('Error al cargar calificaciones');
-        
+
         const datos = await response.json();
         datosActuales = datos;
-        
+
         if (datos.length === 0) {
             mostrarSinDatos();
             return;
         }
-        
+
         mostrarCalificaciones(datos);
-        
+
     } catch (error) {
         console.error('Error:', error);
         mostrarError('Error al cargar las calificaciones');
@@ -237,35 +237,40 @@ async function cargarCalificaciones() {
 
 function mostrarCalificaciones(datos) {
     if (!datos || datos.length === 0) return;
-    
+
     const primerDato = datos[0];
     nombreAlumno.textContent = `${primerDato.nombres} ${primerDato.apellido_paterno} ${primerDato.apellido_materno || ''}`;
     rutAlumno.textContent = primerDato.rut;
-    
+
     // --- INCORPORACIÓN DEL PROFESOR JEFE EN LA VISTA ---
     const nombreProfeJefe = primerDato.profe_jefe_nombre ? `${primerDato.profe_jefe_nombre} ${primerDato.profe_jefe_apellido}` : 'No asignado';
     cursoAlumno.textContent = `${primerDato.grado}° ${primerDato.nombre_curso} | Prof. Jefe: ${nombreProfeJefe}`;
-    
+
     infoAlumno.style.display = 'block';
-    
+
     const asignaturaFiltro = filtroAsignatura.value;
     const asignaturas = {};
-    
+
     datos.forEach(nota => {
         if (asignaturaFiltro && nota.nombre_asignatura !== asignaturaFiltro) {
             return;
         }
-        
+
         if (!asignaturas[nota.nombre_asignatura]) {
             asignaturas[nota.nombre_asignatura] = {
-                notas: [],
+                notasS1: [],
+                notasS2: [],
                 docente: `${nota.docente_nombre} ${nota.docente_apellido}`
             };
         }
-        
-        asignaturas[nota.nombre_asignatura].notas.push(nota);
+
+        if (nota.semestre == 2 || nota.semestre === '2') {
+            asignaturas[nota.nombre_asignatura].notasS2.push(nota);
+        } else {
+            asignaturas[nota.nombre_asignatura].notasS1.push(nota);
+        }
     });
-    
+
     if (Object.keys(asignaturas).length === 0) {
         contenedorCalificaciones.innerHTML = `
             <div class="no-data">
@@ -275,82 +280,116 @@ function mostrarCalificaciones(datos) {
         btnDescargarPDF.disabled = false;
         return;
     }
-    
-    let sumaTotal = 0;
-    let cantidadTotal = 0;
+
+    let sumaTotalAnual = 0;
+    let cantidadTotalAnual = 0;
     let html = '';
-    
+
     Object.keys(asignaturas).sort().forEach(nombreAsig => {
         const asig = asignaturas[nombreAsig];
-        
-        let suma = 0;
-        let cantidad = 0;
-        
-        asig.notas.forEach(nota => {
-            if (nota.nota !== null) {
-                suma += parseFloat(nota.nota);
-                cantidad++;
-            }
-        });
-        
-        let promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : null;
-        if (promedio === '3.9') promedio = '4.0'; 
-        
-        if (promedio !== null) {
-            sumaTotal += parseFloat(promedio);
-            cantidadTotal++;
+
+        const calcProm = (notas) => {
+            let suma = 0, cant = 0;
+            notas.forEach(n => {
+                if (n.nota !== null) {
+                    suma += parseFloat(n.nota);
+                    cant++;
+                }
+            });
+            let prom = cant > 0 ? (suma / cant).toFixed(1) : null;
+            if (prom === '3.9') prom = '4.0';
+            return { prom, cant };
+        };
+
+        const resS1 = calcProm(asig.notasS1);
+        const resS2 = calcProm(asig.notasS2);
+        const promS1 = resS1.prom;
+        const promS2 = resS2.prom;
+
+        let promAnualVal = null;
+        if (promS1 !== null && promS2 !== null) {
+            promAnualVal = ((parseFloat(promS1) + parseFloat(promS2)) / 2).toFixed(1);
+        } else if (promS1 !== null) {
+            promAnualVal = promS1;
+        } else if (promS2 !== null) {
+            promAnualVal = promS2;
         }
-        
+        if (promAnualVal === '3.9') promAnualVal = '4.0';
+
+        if (promAnualVal !== null) {
+            sumaTotalAnual += parseFloat(promAnualVal);
+            cantidadTotalAnual++;
+        }
+
+        const renderNotas = (notas) => {
+            if (notas.length === 0) return '<div class="sin-notas">No hay evaluaciones registradas</div>';
+            return `
+                <div class="notas-grid">
+                    ${notas.map(nota => `
+                        <div class="nota-item">
+                            <h4>${nota.evaluacion}</h4>
+                            <div class="nota-valor ${nota.nota !== null ? getColorNota(nota.nota) : 'nota-pendiente'}">
+                                ${nota.nota !== null ? parseFloat(nota.nota).toFixed(1) : 'Pendiente'}
+                            </div>
+                            <div class="nota-fecha">
+                                📅 ${new Date(nota.fecha).toLocaleDateString('es-CL')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        };
+
         html += `
             <div class="asignatura-card">
                 <div class="asignatura-header">
-                    <h3>
-                        📚 ${nombreAsig}
-                        <span style="font-size: 12px; font-weight: normal; opacity: 0.9;">
+                    <div style="flex: 1;">
+                        <h3>
+                            📚 ${nombreAsig}
+                        </h3>
+                        <span style="font-size: 13px; font-weight: normal; opacity: 0.9; display: block; margin-top: 5px;">
                             (Prof. ${asig.docente})
                         </span>
-                    </h3>
-                    ${promedio !== null ? 
-                        `<span class="promedio-asignatura ${getColorNota(promedio)}">
-                            Promedio: ${promedio}
-                        </span>` : 
-                        `<span class="promedio-asignatura nota-pendiente">Sin notas</span>`
-                    }
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; text-align: right; justify-content: flex-end;">
+                        ${promS1 !== null ? `<span class="promedio-asignatura ${getColorNota(promS1)}" style="font-size: 0.85em; padding: 4px 8px;">S1: ${promS1}</span>` : `<span class="promedio-asignatura nota-pendiente" style="font-size: 0.85em; padding: 4px 8px;">S1: S/N</span>`}
+                        ${promS2 !== null ? `<span class="promedio-asignatura ${getColorNota(promS2)}" style="font-size: 0.85em; padding: 4px 8px;">S2: ${promS2}</span>` : `<span class="promedio-asignatura nota-pendiente" style="font-size: 0.85em; padding: 4px 8px;">S2: S/N</span>`}
+                        ${promAnualVal !== null ? `<span class="promedio-asignatura ${getColorNota(promAnualVal)}" style="padding: 4px 8px;">Final: ${promAnualVal}</span>` : `<span class="promedio-asignatura nota-pendiente" style="padding: 4px 8px;">Final: S/N</span>`}
+                    </div>
                 </div>
-                <div class="notas-lista">
-                    ${asig.notas.length > 0 ? 
-                        `<div class="notas-grid">
-                            ${asig.notas.map(nota => `
-                                <div class="nota-item">
-                                    <h4>${nota.evaluacion}</h4>
-                                    <div class="nota-valor ${nota.nota !== null ? getColorNota(nota.nota) : 'nota-pendiente'}">
-                                        ${nota.nota !== null ? parseFloat(nota.nota).toFixed(1) : 'Pendiente'}
-                                    </div>
-                                    <div class="nota-fecha">
-                                        📅 ${new Date(nota.fecha).toLocaleDateString('es-CL')}
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>` : 
-                        '<div class="sin-notas">No hay evaluaciones registradas</div>'
-                    }
+                <div class="semestres-container" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                    <div class="semestre-section">
+                        <h4 style="margin: 0 0 10px 0; color: #555; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Primer Semestre</h4>
+                        <div class="notas-lista" style="margin: 0;">
+                            ${renderNotas(asig.notasS1)}
+                        </div>
+                    </div>
+                    
+                    ${asig.notasS2.length > 0 ? `
+                    <div class="semestre-section" style="margin-top: 10px;">
+                        <h4 style="margin: 0 0 10px 0; color: #555; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Segundo Semestre</h4>
+                        <div class="notas-lista" style="margin: 0;">
+                            ${renderNotas(asig.notasS2)}
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
         `;
     });
-    
+
     contenedorCalificaciones.innerHTML = html;
-    
-    if (cantidadTotal > 0) {
-        let promedioFinal = (sumaTotal / cantidadTotal).toFixed(1);
-        if (promedioFinal === '3.9') promedioFinal = '4.0'; 
+
+    if (cantidadTotalAnual > 0) {
+        let promedioFinal = (sumaTotalAnual / cantidadTotalAnual).toFixed(1);
+        if (promedioFinal === '3.9') promedioFinal = '4.0';
         promedioGeneral.textContent = promedioFinal;
         promedioGeneral.className = `promedio-badge ${getColorNota(promedioFinal)}`;
     } else {
         promedioGeneral.textContent = '-';
         promedioGeneral.className = 'promedio-badge';
     }
-    
+
     btnDescargarPDF.disabled = false;
 }
 
@@ -359,193 +398,222 @@ async function descargarPDF() {
         alert('No hay datos para descargar');
         return;
     }
-    
+
     try {
         btnDescargarPDF.disabled = true;
         btnDescargarPDF.textContent = '⏳ Generando PDF...';
-        
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
+
         const primerDato = datosActuales[0];
         const nombreCompleto = `${primerDato.nombres} ${primerDato.apellido_paterno} ${primerDato.apellido_materno || ''}`;
         const rut = primerDato.rut;
         const curso = `${primerDato.grado}° ${primerDato.nombre_curso}`;
-        
+
         // --- INCORPORACIÓN DEL PROFESOR JEFE EN EL PDF ---
         const profeJefe = primerDato.profe_jefe_nombre ? `${primerDato.profe_jefe_nombre} ${primerDato.profe_jefe_apellido}` : 'No asignado';
-        
+
         const asignaturaFiltro = filtroAsignatura.value;
         const asignaturas = {};
-        let maxNotas = 0; 
-        
+        let maxNotasS1 = 0;
+        let maxNotasS2 = 0;
+
         datosActuales.forEach(nota => {
             if (asignaturaFiltro && nota.nombre_asignatura !== asignaturaFiltro) {
                 return;
             }
-            
+
             if (!asignaturas[nota.nombre_asignatura]) {
                 asignaturas[nota.nombre_asignatura] = {
-                    notas: [],
+                    notasS1: [],
+                    notasS2: [],
                     docente: `${nota.docente_nombre} ${nota.docente_apellido}`
                 };
             }
-            asignaturas[nota.nombre_asignatura].notas.push(nota);
-            
-            if (asignaturas[nota.nombre_asignatura].notas.length > maxNotas) {
-                maxNotas = asignaturas[nota.nombre_asignatura].notas.length;
+
+            if (nota.semestre == 2 || nota.semestre === '2') {
+                asignaturas[nota.nombre_asignatura].notasS2.push(nota);
+                if (asignaturas[nota.nombre_asignatura].notasS2.length > maxNotasS2) {
+                    maxNotasS2 = asignaturas[nota.nombre_asignatura].notasS2.length;
+                }
+            } else {
+                asignaturas[nota.nombre_asignatura].notasS1.push(nota);
+                if (asignaturas[nota.nombre_asignatura].notasS1.length > maxNotasS1) {
+                    maxNotasS1 = asignaturas[nota.nombre_asignatura].notasS1.length;
+                }
             }
         });
-        
-        if (maxNotas === 0) maxNotas = 1; 
-        
+
+        let maxNotas = Math.max(maxNotasS1, maxNotasS2);
+        if (maxNotas === 0) maxNotas = 1;
+
         doc.setFillColor(255, 255, 255);
         doc.rect(0, 0, 210, 40, 'F');
-        
+
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(22);
         doc.setFont(undefined, 'bold');
         doc.text('INFORME DE CALIFICACIONES', 105, 15, { align: 'center' });
-        
+
         doc.setFontSize(12);
         doc.setFont(undefined, 'normal');
         doc.text('Registro Académico', 105, 25, { align: 'center' });
-        
+
         doc.setFontSize(9);
-        const fechaEmision = new Date().toLocaleDateString('es-CL', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+        const fechaEmision = new Date().toLocaleDateString('es-CL', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
         doc.text(`Fecha de emisión: ${fechaEmision}`, 105, 32, { align: 'center' });
-        
+
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(11);
         doc.setFont(undefined, 'bold');
         let yPos = 50;
-        
+
         doc.text('INFORMACIÓN DEL ESTUDIANTE', 14, yPos);
-        
+
         doc.setFont(undefined, 'normal');
         doc.setFontSize(10);
         yPos += 8;
-        
+
         doc.text(`Nombre: ${nombreCompleto}`, 14, yPos);
         yPos += 6;
         doc.text(`RUT: ${rut}`, 14, yPos);
         yPos += 6;
-        
+
         // Imprimiendo el Curso y el Profesor Jefe en la misma línea
         doc.text(`Curso: ${curso} | Prof. Jefe: ${profeJefe}`, 14, yPos);
-        
+
         if (asignaturaFiltro) {
             yPos += 6;
             doc.setFont(undefined, 'italic');
             doc.text(`Filtrado por: ${asignaturaFiltro}`, 14, yPos);
             doc.setFont(undefined, 'normal');
         }
-        
-        let sumaTotal = 0;
-        let cantidadTotal = 0;
-        
+
+        let sumaTotalAnual = 0;
+        let cantidadTotalAnual = 0;
+
         Object.keys(asignaturas).forEach(nombreAsig => {
             const asig = asignaturas[nombreAsig];
-            let suma = 0;
-            let cantidad = 0;
-            
-            asig.notas.forEach(nota => {
-                if (nota.nota !== null) {
-                    suma += parseFloat(nota.nota);
-                    cantidad++;
-                }
-            });
-            
-            if (cantidad > 0) {
-                sumaTotal += suma / cantidad;
-                cantidadTotal++;
+            const getProm = (notas) => {
+                let s = 0, c = 0;
+                notas.forEach(n => { if (n.nota !== null) { s += parseFloat(n.nota); c++; } });
+                let p = c > 0 ? (s / c).toFixed(1) : null;
+                if (p === '3.9') p = '4.0';
+                return p;
+            };
+            let promS1 = getProm(asig.notasS1);
+            let promS2 = getProm(asig.notasS2);
+            let promAnual = null;
+            if (promS1 !== null && promS2 !== null) {
+                promAnual = ((parseFloat(promS1) + parseFloat(promS2)) / 2).toFixed(1);
+            } else if (promS1 !== null) {
+                promAnual = promS1;
+            } else if (promS2 !== null) {
+                promAnual = promS2;
+            }
+            if (promAnual === '3.9') promAnual = '4.0';
+
+            if (promAnual !== null) {
+                sumaTotalAnual += parseFloat(promAnual);
+                cantidadTotalAnual++;
             }
         });
-        
-        let promedioFinal = cantidadTotal > 0 ? (sumaTotal / cantidadTotal).toFixed(1) : '-';
-        if (promedioFinal === '3.9') promedioFinal = '4.0'; 
-        
+
+        let promedioFinal = cantidadTotalAnual > 0 ? (sumaTotalAnual / cantidadTotalAnual).toFixed(1) : '-';
+        if (promedioFinal === '3.9') promedioFinal = '4.0';
+
         yPos += 6;
         doc.setFont(undefined, 'bold');
         doc.text(`Promedio General: ${promedioFinal}`, 14, yPos);
-        
+
         yPos += 12;
-        
+
         doc.setFontSize(11);
         doc.text('DETALLE DE CALIFICACIONES', 14, yPos);
         yPos += 5;
-        
-        const encabezados = ['Asignatura'];
+
+        const encabezados = ['Asignatura', 'Sem.'];
         for (let i = 1; i <= maxNotas; i++) {
             encabezados.push(`N${i}`);
         }
         encabezados.push('Prom.');
-        
+
         const tableData = [];
-        
+
         Object.keys(asignaturas).sort().forEach((nombreAsig) => {
             const asig = asignaturas[nombreAsig];
-            const fila = [`${nombreAsig}\n(Prof. ${asig.docente})`]; 
-            
-            let suma = 0;
-            let cantidad = 0;
-            
-            for (let i = 0; i < maxNotas; i++) {
-                if (i < asig.notas.length) {
-                    const nota = asig.notas[i];
-                    if (nota.nota !== null) {
-                        const valorNota = parseFloat(nota.nota);
-                        suma += valorNota;
-                        cantidad++;
-                        fila.push(valorNota.toFixed(1));
+
+            const procesarFila = (notas, semestreTexto) => {
+                const fila = semestreTexto === 'S1' ? [`${nombreAsig}\n(Prof. ${asig.docente})`, semestreTexto] : ['', semestreTexto];
+                let suma = 0;
+                let cantidad = 0;
+
+                for (let i = 0; i < maxNotas; i++) {
+                    if (i < notas.length) {
+                        const nota = notas[i];
+                        if (nota.nota !== null) {
+                            const valorNota = parseFloat(nota.nota);
+                            suma += valorNota;
+                            cantidad++;
+                            fila.push(valorNota.toFixed(1));
+                        } else {
+                            fila.push('Pte.');
+                        }
                     } else {
-                        fila.push('Pte.'); 
+                        fila.push('-');
                     }
-                } else {
-                    fila.push('-'); 
                 }
+
+                let promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : '-';
+                if (promedio === '3.9') promedio = '4.0';
+                fila.push(promedio);
+                return fila;
+            };
+
+            const filaS1 = procesarFila(asig.notasS1, 'S1');
+            tableData.push(filaS1);
+
+            if (asig.notasS2.length > 0) {
+                const filaS2 = procesarFila(asig.notasS2, 'S2');
+                tableData.push(filaS2);
             }
-            
-            let promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : '-';
-            if (promedio === '3.9') promedio = '4.0'; 
-            fila.push(promedio);
-            
-            tableData.push(fila);
         });
-        
+
         doc.autoTable({
             startY: yPos,
             head: [encabezados],
             body: tableData,
             theme: 'striped',
-            
+
             headStyles: {
-                fillColor: [255, 255, 255], 
+                fillColor: [255, 255, 255],
                 fontSize: 9,
                 fontStyle: 'bold',
                 halign: 'center',
-                textColor: [0, 0, 0] 
+                textColor: [0, 0, 0]
             },
             bodyStyles: {
                 fontSize: 9,
-                textColor: [0, 0, 0] 
+                textColor: [0, 0, 0]
             },
             columnStyles: {
-                0: { cellWidth: 70, halign: 'left', fontStyle: 'bold' } 
+                0: { cellWidth: 50, halign: 'left', fontStyle: 'bold' },
+                1: { cellWidth: 15, halign: 'center', fontStyle: 'bold', textColor: [100, 100, 100] }
             },
-            styles: { 
-                halign: 'center', 
-                valign: 'middle'  
+            styles: {
+                halign: 'center',
+                valign: 'middle'
             },
             margin: { left: 14, right: 14 }
         });
-        
+
         const totalPages = doc.internal.getNumberOfPages();
-        
+
         for (let i = 1; i <= totalPages; i++) {
             doc.setPage(i);
             doc.setFontSize(8);
@@ -563,13 +631,13 @@ async function descargarPDF() {
                 { align: 'center' }
             );
         }
-        
+
         const nombreArchivo = `Calificaciones_${nombreCompleto.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
         doc.save(nombreArchivo);
-        
+
         btnDescargarPDF.disabled = false;
         btnDescargarPDF.textContent = '📥 Descargar PDF';
-        
+
     } catch (error) {
         console.error('Error al generar PDF:', error);
         alert('Error al generar el PDF');

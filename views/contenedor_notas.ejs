@@ -1,43 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
-  <link rel="stylesheet" href="/Styles/style.css">      
+<link rel="stylesheet" href="/Styles/style.css">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Libro de Clases - Notas</title>
 
 </head>
+
 <body>
     <div class="container">
         <div class="header">
-    <div class="header-content">
-        <div>
-            <h1>📚 Libro de Clases - Registro de Notas</h1>
-            <p class="subtitle">Sistema de gestión de calificaciones escolares</p>
-        </div>
+            <div class="header-content">
+                <div>
+                    <h1>📚 Libro de Clases - Registro de Notas</h1>
+                    <p class="subtitle">Sistema de gestión de calificaciones escolares</p>
+                </div>
 
-        <div class="user-info">
-            <button class="btn-primary" onclick="window.location.href='/calificaciones'">
-                Reporte de notas
-            </button>
-            <button class="btn-primary" onclick="window.location.href='/anotaciones'">
-                Anotaciones
-            </button>
-            <button class="btn-logout" onclick="window.location.href='/logout'">
-                Cerrar Sesión
-            </button>
+                <div class="user-info">
+                    <button class="btn-primary" onclick="window.location.href='/calificaciones'">
+                        Reporte de notas
+                    </button>
+                    <button class="btn-primary" onclick="window.location.href='/anotaciones'">
+                        Anotaciones
+                    </button>
+                    <button class="btn-logout" onclick="window.location.href='/logout'">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
 
 
         <div class="controls">
             <div class="filters">
                 <label for="filtroCurso">📚 Curso:</label>
                 <select id="filtroCurso">
-                   
+
                 </select>
-                
+
                 <label for="filtroLetra">📝 Letra:</label>
                 <select id="filtroLetra">
                     <option value="">Todas</option>
@@ -47,24 +49,25 @@
                     <option value="D">D</option>
                 </select>
                 <label for="filtroAsignatura">🔬 Asignatura:</label>
-    <select id="filtroAsignatura">
-        <option value="">Todas las asignaturas</option>
-    </select>
-                
+                <select id="filtroAsignatura">
+                    <option value="">Todas las asignaturas</option>
+                </select>
+
             </div>
-            
-           <div class="actions">
-    <button id="btnRecargar" class="btn-primary"> Recargar Datos</button>
-    <button id="btnNuevaEvaluacion" class="btn-success"> Nueva Evaluación</button>
-   
-    <% if (rol === 'admin') { %>
-        <button id="btnHistorialNotas" class="btn-warning" onclick="window.location.href='/historial_notas'">
-            Ver Historial de Cambios
-        </button>
-    <% } %>
-       
-</div>
-            
+
+            <div class="actions">
+                <button id="btnRecargar" class="btn-primary"> Recargar Datos</button>
+                <button id="btnNuevaEvaluacion" class="btn-success"> Nueva Evaluación</button>
+
+                <% if (rol==='admin' ) { %>
+                    <button id="btnHistorialNotas" class="btn-warning"
+                        onclick="window.location.href='/historial_notas'">
+                        Ver Historial de Cambios
+                    </button>
+                    <% } %>
+
+            </div>
+
             <div class="info">
                 <span id="totalAlumnos">Cargando...</span>
             </div>
@@ -106,63 +109,92 @@
         </div>
 
         <div id="modalNuevaEvaluacion" class="modal">
-    <div class="modal-content">
-        <span class="close-eval">&times;</span>
-        <h2>➕ Crear Nueva Evaluación</h2>
-        <div class="modal-body">
-            <label for="inputAsignatura">Asignatura:</label>
-            <select id="inputAsignatura">
-                <option value="">Cargando asignaturas...</option>
-            </select>
+            <div class="modal-content">
+                <span class="close-eval">&times;</span>
+                <h2>➕ Crear Nueva Evaluación</h2>
+                <div class="modal-body">
+                    <label for="inputAsignatura">Asignatura:</label>
+                    <select id="inputAsignatura">
+                        <option value="">Cargando asignaturas...</option>
+                    </select>
 
-            <label for="inputDocente">Docente:</label>
-            <select id="inputDocente">
-                <option value="">Seleccionar...</option>
-            </select>
+                    <label for="inputDocente">Docente:</label>
+                    <select id="inputDocente">
+                        <option value="">Seleccionar...</option>
+                    </select>
 
-            <label for="inputTipoEvaluacion">Tipo de Evaluación:</label>
-            <input type="text" id="inputTipoEvaluacion" placeholder="Ej: Sumativa, Formativa, Prueba">
-            
-            <label for="inputFecha">Fecha:</label>
-            <input type="date" id="inputFecha">
-            
-            <label for="inputCurso">Curso:</label>
-            <select id="inputCurso">
-                </select>
-            
-            <button id="btnCrearEvaluacion" class="btn-success">Crear Evaluación</button>
-        </div>
-    </div>
-</div>
+                    <label for="inputTipoEvaluacion">Tipo de Evaluación:</label>
+                    <input type="text" id="inputTipoEvaluacion" placeholder="Ej: Sumativa, Formativa, Prueba">
 
-<div id="modalEditarEvaluacion" class="modal">
-    <div class="modal-content">
-        <span class="close-edit-eval">&times;</span> 
-        
-        <h2>✏️ Editar Evaluación</h2>
-        <div class="modal-body">
-            <label for="editAsignatura">Asignatura:</label>
-            <select id="editAsignatura">
-                <option value="">Cargando asignaturas...</option>
-            </select>
-            
-            <label for="editTipoEvaluacion">Tipo de Evaluación:</label>
-            <input type="text" id="editTipoEvaluacion">
-            
-            <label for="editFecha">Fecha:</label>
-            <input type="date" id="editFecha">
-            
-            <div class="button-group">
-                <button id="btnActualizarEvaluacion" class="btn-primary">💾 Guardar Cambios</button>
-              
+                    <label for="inputFecha">Fecha:</label>
+                    <input type="date" id="inputFecha">
+
+                    <label for="inputCurso">Curso:</label>
+                    <select id="inputCurso">
+                    </select>
+
+                    <button id="btnCrearEvaluacion" class="btn-success">Crear Evaluación</button>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-<script>
-    // Le pasamos el rol desde el servidor al navegador
-    const ROL_USUARIO = '<%= rol %>'; 
-</script>
-    <script src="/Scripts/script.js"></script>
-  
+
+        <div id="modalEditarEvaluacion" class="modal">
+            <div class="modal-content">
+                <span class="close-edit-eval">&times;</span>
+
+                <h2>✏️ Editar Evaluación</h2>
+                <div class="modal-body">
+                    <label for="editAsignatura">Asignatura:</label>
+                    <select id="editAsignatura">
+                        <option value="">Cargando asignaturas...</option>
+                    </select>
+
+                    <label for="editTipoEvaluacion">Tipo de Evaluación:</label>
+                    <input type="text" id="editTipoEvaluacion">
+
+                    <label for="editFecha">Fecha:</label>
+                    <input type="date" id="editFecha">
+
+                    <div class="button-group">
+                        <button id="btnActualizarEvaluacion" class="btn-primary">💾 Guardar Cambios</button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            // Le pasamos el rol desde el servidor al navegador
+            const ROL_USUARIO = '<%= rol %>'; 
+        </script>
+        <script src="/Scripts/script.js"></script>
+
+        <!-- Botón Dark Mode -->
+        <button class="btn-dark-mode btn-dark-mode-float" id="btnToggleDarkMode" title="Toggle Dark Mode">🌙</button>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const toggleBtn = document.getElementById('btnToggleDarkMode');
+                const body = document.body;
+
+                if (localStorage.getItem('theme') === 'dark') {
+                    body.classList.add('dark-mode');
+                    toggleBtn.textContent = '☀️';
+                }
+
+                if (toggleBtn) {
+                    toggleBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        body.classList.toggle('dark-mode');
+                        if (body.classList.contains('dark-mode')) {
+                            localStorage.setItem('theme', 'dark');
+                            toggleBtn.textContent = '☀️';
+                        } else {
+                            localStorage.setItem('theme', 'light');
+                            toggleBtn.textContent = '🌙';
+                        }
+                    });
+                }
+            });
+        </script>
+</body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="container">
         <header class="header">
@@ -25,7 +27,7 @@
                     <button class="btn-primary" onclick="window.location.href='/calificaciones'">
                         📊 Calificaciones
                     </button>
-                    <button class="btn-logout"  id="btnCerrarSesion" onclick="window.location.href ='/logout'">
+                    <button class="btn-logout" id="btnCerrarSesion" onclick="window.location.href ='/logout'">
                         🚪 Cerrar Sesión
                     </button>
                 </div>
@@ -37,12 +39,7 @@
                 <div class="busqueda-rut-container">
                     <label for="inputBuscarRut">🔍 Buscar Alumno por RUT:</label>
                     <div class="input-buscar-rut">
-                        <input 
-                            type="text" 
-                            id="inputBuscarRut" 
-                            placeholder="Ej: 12.345.678-9"
-                            maxlength="12"
-                        >
+                        <input type="text" id="inputBuscarRut" placeholder="Ej: 12.345.678-9" maxlength="12">
                         <div id="sugerenciasRut"></div>
                     </div>
                 </div>
@@ -58,21 +55,21 @@
                         <option value="">Todos los cursos</option>
                     </select>
                 </div>
-                
+
                 <div class="filtro-grupo">
                     <label for="filtroLetra">📝 Letra:</label>
                     <select id="filtroLetra">
                         <option value="">Todas</option>
                     </select>
                 </div>
-                
+
                 <div class="filtro-grupo">
                     <label for="filtroAlumno">👤 Alumno:</label>
                     <select id="filtroAlumno">
                         <option value="">Todos los alumnos</option>
                     </select>
                 </div>
-                
+
                 <div class="filtro-grupo">
                     <label for="filtroTipo">📋 Tipo:</label>
                     <select id="filtroTipo">
@@ -82,7 +79,7 @@
                         <option value="Informativa">📖 Informativas</option>
                     </select>
                 </div>
-                
+
                 <button id="btnLimpiar" class="btn-secondary">🔄 Limpiar</button>
                 <button id="btnNuevaAnotacion" class="btn-success">➕ Nueva Anotación</button>
             </div>
@@ -125,9 +122,12 @@
                 <span class="close" id="closeModalNueva">&times;</span>
                 <h2>➕ Nueva Anotación</h2>
                 <div class="modal-body">
-                    <div class="filtros-busqueda-modal" style="background: #f4f6f8; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #e0e0e0;">
-                        <span style="display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.9em; color: #333;">🔍 Filtrar lista de alumnos:</span>
-                        
+                    <div class="filtros-busqueda-modal"
+                        style="background: #f4f6f8; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #e0e0e0;">
+                        <span
+                            style="display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.9em; color: #333;">🔍
+                            Filtrar lista de alumnos:</span>
+
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <div style="flex: 1; min-width: 80px;">
                                 <label for="filtroModalCurso">Grado:</label>
@@ -169,12 +169,8 @@
                     </select>
 
                     <label for="modalDescripcion">Descripción:</label>
-                    <textarea 
-                        id="modalDescripcion" 
-                        rows="4" 
-                        placeholder="Describe la anotación (mínimo 10 caracteres)..."
-                        required
-                    ></textarea>
+                    <textarea id="modalDescripcion" rows="4"
+                        placeholder="Describe la anotación (mínimo 10 caracteres)..." required></textarea>
 
                     <button id="btnGuardarAnotacion" class="btn-success">💾 Guardar Anotación</button>
                 </div>
@@ -187,7 +183,7 @@
                 <h2>✏️ Editar Anotación</h2>
                 <div class="modal-body">
                     <input type="hidden" id="editIdAnotacion">
-                    
+
                     <div class="info-readonly">
                         <p><strong>Alumno:</strong> <span id="editAlumnoNombre"></span></p>
                         <p><strong>Docente:</strong> <span id="editDocenteNombre"></span></p>
@@ -198,16 +194,12 @@
                     <select id="editTipo" required>
                         <option value="Positiva">✅ Positiva</option>
                         <option value="Negativa">❌ Negativa</option>
-                        <option value="Informativa">📖 Informativa</option> 
+                        <option value="Informativa">📖 Informativa</option>
                     </select>
 
                     <label for="editDescripcion">Descripción:</label>
-                    <textarea 
-                        id="editDescripcion" 
-                        rows="4" 
-                        placeholder="Describe la anotación (mínimo 10 caracteres)..."
-                        required
-                    ></textarea>
+                    <textarea id="editDescripcion" rows="4"
+                        placeholder="Describe la anotación (mínimo 10 caracteres)..." required></textarea>
 
                     <div class="button-group">
                         <button id="btnActualizarAnotacion" class="btn-primary">💾 Guardar Cambios</button>
@@ -220,5 +212,34 @@
 
     <script src="/Scripts/validador-rut.js"></script>
     <script src="/Scripts/anotaciones.js"></script>
+
+    <!-- Botón Dark Mode -->
+    <button class="btn-dark-mode btn-dark-mode-float" id="btnToggleDarkMode" title="Toggle Dark Mode">🌙</button>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('btnToggleDarkMode');
+            const body = document.body;
+
+            if (localStorage.getItem('theme') === 'dark') {
+                body.classList.add('dark-mode');
+                toggleBtn.textContent = '☀️';
+            }
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    body.classList.toggle('dark-mode');
+                    if (body.classList.contains('dark-mode')) {
+                        localStorage.setItem('theme', 'dark');
+                        toggleBtn.textContent = '☀️';
+                    } else {
+                        localStorage.setItem('theme', 'light');
+                        toggleBtn.textContent = '🌙';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
+
 </html>
