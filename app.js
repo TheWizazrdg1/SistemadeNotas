@@ -1159,6 +1159,11 @@ app.get('/debug-session', (req, res) => {
     });
 });
 
+app.use((req, res) => {
+    console.log(`❌ Ruta no encontrada: ${req.originalUrl}, redirigiendo a /inicio`);
+    res.redirect('/inicio');
+});
+
 app.use((err, req, res, next) => {
     console.error('Error no manejado:', err);
     res.status(500).send('Error interno del servidor');
