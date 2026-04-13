@@ -404,7 +404,7 @@ async function descargarPDF() {
         btnDescargarPDF.textContent = '⏳ Generando PDF...';
 
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        const doc = new jsPDF({ orientation: 'landscape' });
 
         const primerDato = datosActuales[0];
         const nombreCompleto = `${primerDato.nombres} ${primerDato.apellido_paterno} ${primerDato.apellido_materno || ''}`;
@@ -445,20 +445,19 @@ async function descargarPDF() {
             }
         });
 
-        let maxNotas = Math.max(maxNotasS1, maxNotasS2);
-        if (maxNotas === 0) maxNotas = 1;
+        if (maxNotasS1 === 0) maxNotasS1 = 1;
 
         doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, 210, 40, 'F');
+        doc.rect(0, 0, 297, 40, 'F');
 
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(22);
         doc.setFont(undefined, 'bold');
-        doc.text('INFORME DE CALIFICACIONES', 105, 15, { align: 'center' });
+        doc.text('INFORME DE CALIFICACIONES', 148.5, 15, { align: 'center' });
 
         doc.setFontSize(12);
         doc.setFont(undefined, 'normal');
-        doc.text('Registro Académico', 105, 25, { align: 'center' });
+        doc.text('Registro Académico', 148.5, 25, { align: 'center' });
 
         doc.setFontSize(9);
         const fechaEmision = new Date().toLocaleDateString('es-CL', {
@@ -466,7 +465,7 @@ async function descargarPDF() {
             month: 'long',
             day: 'numeric'
         });
-        doc.text(`Fecha de emisión: ${fechaEmision}`, 105, 32, { align: 'center' });
+        doc.text(`Fecha de emisión: ${fechaEmision}`, 148.5, 32, { align: 'center' });
 
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(11);
@@ -537,29 +536,66 @@ async function descargarPDF() {
         doc.text('DETALLE DE CALIFICACIONES', 14, yPos);
         yPos += 5;
 
-        const encabezados = ['Asignatura', 'Sem.'];
-        for (let i = 1; i <= maxNotas; i++) {
-            encabezados.push(`N${i}`);
+        const encabezados = ['Asignatura'];
+        for (let i = 1; i <= maxNotasS1; i++) {
+            encabezados.push(`1S-N${i}`);
         }
-        encabezados.push('Prom.');
+        encabezados.push('Prom. 1S');
+
+        if (maxNotasS2 > 0) {
+            for (let i = 1; i <= maxNotasS2; i++) {
+                encabezados.push(`2S-N${i}`);
+            }
+            encabezados.push('Prom. 2S');
+        }
+        encabezados.push('Final');
 
         const tableData = [];
 
         Object.keys(asignaturas).sort().forEach((nombreAsig) => {
             const asig = asignaturas[nombreAsig];
+            const fila = [`${nombreAsig}\n(Prof. ${asig.docente})`];
 
-            const procesarFila = (notas, semestreTexto) => {
-                const fila = semestreTexto === 'S1' ? [`${nombreAsig}\n(Prof. ${asig.docente})`, semestreTexto] : ['', semestreTexto];
-                let suma = 0;
-                let cantidad = 0;
+            // Semestre 1
+            let sumaS1 = 0;
+            let cantS1 = 0;
+            for (let i = 0; i < maxNotasS1; i++) {
+                if (i < asig.notasS1.length) {
+                    const nota = asig.notasS1[i];
+                    if (nota.nota !== null) {
+                        const valorNota = parseFloat(nota.nota);
+                        sumaS1 += valorNota;
+                        cantS1++;
+                        fila.push(valorNota.toFixed(1));
+                    } else {
+                        fila.push('Pte.');
+                    }
+                } else {
+                    fila.push('-');
+                }
+            }
+            let promS1Str = '-';
+            let promS1Val = null;
+            if (cantS1 > 0) {
+                promS1Str = (sumaS1 / cantS1).toFixed(1);
+                if (promS1Str === '3.9') promS1Str = '4.0';
+                promS1Val = parseFloat(promS1Str);
+            }
+            fila.push(promS1Str);
 
-                for (let i = 0; i < maxNotas; i++) {
-                    if (i < notas.length) {
-                        const nota = notas[i];
+            // Semestre 2
+            let promS2Val = null;
+            if (maxNotasS2 > 0) {
+                let sumaS2 = 0;
+                let cantS2 = 0;
+                let promS2Str = '-';
+                for (let i = 0; i < maxNotasS2; i++) {
+                    if (i < asig.notasS2.length) {
+                        const nota = asig.notasS2[i];
                         if (nota.nota !== null) {
                             const valorNota = parseFloat(nota.nota);
-                            suma += valorNota;
-                            cantidad++;
+                            sumaS2 += valorNota;
+                            cantS2++;
                             fila.push(valorNota.toFixed(1));
                         } else {
                             fila.push('Pte.');
@@ -568,20 +604,28 @@ async function descargarPDF() {
                         fila.push('-');
                     }
                 }
-
-                let promedio = cantidad > 0 ? (suma / cantidad).toFixed(1) : '-';
-                if (promedio === '3.9') promedio = '4.0';
-                fila.push(promedio);
-                return fila;
-            };
-
-            const filaS1 = procesarFila(asig.notasS1, 'S1');
-            tableData.push(filaS1);
-
-            if (asig.notasS2.length > 0) {
-                const filaS2 = procesarFila(asig.notasS2, 'S2');
-                tableData.push(filaS2);
+                if (cantS2 > 0) {
+                    promS2Str = (sumaS2 / cantS2).toFixed(1);
+                    if (promS2Str === '3.9') promS2Str = '4.0';
+                    promS2Val = parseFloat(promS2Str);
+                }
+                fila.push(promS2Str);
             }
+
+            // Promedio Final
+            let promFinalStr = '-';
+            if (promS1Val !== null && promS2Val !== null) {
+                promFinalStr = ((promS1Val + promS2Val) / 2).toFixed(1);
+            } else if (promS1Val !== null) {
+                promFinalStr = promS1Val.toFixed(1);
+            } else if (promS2Val !== null) {
+                promFinalStr = promS2Val.toFixed(1);
+            }
+            if (promFinalStr === '3.9') promFinalStr = '4.0';
+            
+            fila.push(promFinalStr);
+
+            tableData.push(fila);
         });
 
         doc.autoTable({
@@ -591,19 +635,18 @@ async function descargarPDF() {
             theme: 'striped',
 
             headStyles: {
-                fillColor: [255, 255, 255],
+                fillColor: [240, 240, 240],
                 fontSize: 9,
                 fontStyle: 'bold',
                 halign: 'center',
                 textColor: [0, 0, 0]
             },
             bodyStyles: {
-                fontSize: 9,
+                fontSize: 8,
                 textColor: [0, 0, 0]
             },
             columnStyles: {
-                0: { cellWidth: 50, halign: 'left', fontStyle: 'bold' },
-                1: { cellWidth: 15, halign: 'center', fontStyle: 'bold', textColor: [100, 100, 100] }
+                0: { cellWidth: 50, halign: 'left', fontStyle: 'bold' }
             },
             styles: {
                 halign: 'center',
@@ -620,13 +663,13 @@ async function descargarPDF() {
             doc.setTextColor(128, 128, 128);
             doc.text(
                 `Página ${i} de ${totalPages}`,
-                105,
+                148.5,
                 doc.internal.pageSize.height - 10,
                 { align: 'center' }
             );
             doc.text(
                 'Documento generado automáticamente - Sistema de Gestión Académica',
-                105,
+                148.5,
                 doc.internal.pageSize.height - 5,
                 { align: 'center' }
             );
