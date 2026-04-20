@@ -496,6 +496,91 @@ app.post('/cambiar-semestre', soloSuperAdmin, async (req, res) => {
         res.status(500).send('No se pudo actualizar el semestre.');
     }
 });
+
+// ==========================================
+// RUTA: GESTOR DE USUARIOS (SUPER ADMIN)
+// ==========================================
+app.get('/usuarios', soloSuperAdmin, async (req, res) => {
+    try {
+        const sql = "SELECT id_usuario, username, rol FROM usuarios ORDER BY id_usuario DESC";
+        const usuarios = await queryAsync(sql);
+        res.render('contenedor_usuarios', {
+            nombre: req.session.nombre,
+            rol: req.session.rol,
+            usuarios: usuarios
+        });
+    } catch (error) {
+        console.error('Error al cargar gestión de usuarios:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
+
+app.post('/crear_usuario', soloSuperAdmin, async (req, res) => {
+    try {
+        const { username, password, rol } = req.body;
+        if (!username || !password || !rol) {
+            return res.status(400).send('Faltan datos requeridos.');
+        }
+
+        const sql = "INSERT INTO usuarios (username, password, rol) VALUES (?, SHA2(?, 256), ?)";
+        await queryAsync(sql, [username, password, rol]);
+
+        console.log(`✅ Nuevo usuario creado: ${username} (${rol})`);
+        res.redirect('/usuarios');
+    } catch (error) {
+        console.error('Error al crear usuario:', error);
+        res.status(500).send('Error al crear el usuario (¿Quizás el username ya existe?).');
+    }
+});
+
+app.post('/editar_usuario', soloSuperAdmin, async (req, res) => {
+    try {
+        const { id_usuario, username, password, rol } = req.body;
+
+        if (!id_usuario || !username || !rol) {
+            return res.status(400).send('Faltan datos requeridos.');
+        }
+
+        let sql;
+        let params;
+
+        if (password && password.trim() !== "") {
+            sql = "UPDATE usuarios SET username = ?, password = SHA2(?, 256), rol = ? WHERE id_usuario = ?";
+            params = [username, password, rol, id_usuario];
+        } else {
+            sql = "UPDATE usuarios SET username = ?, rol = ? WHERE id_usuario = ?";
+            params = [username, rol, id_usuario];
+        }
+
+        await queryAsync(sql, params);
+        console.log(`✅ Usuario actualizado ID: ${id_usuario}`);
+        res.redirect('/usuarios');
+
+    } catch (error) {
+        console.error('Error al editar usuario:', error);
+        res.status(500).send('Error al editar usuario.');
+    }
+});
+
+app.get('/borrar_usuario/:id', soloSuperAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Prevención: no borrar el propio usuario en sesión
+        if (req.session.id_usuario && req.session.id_usuario.toString() === id.toString()) {
+             return res.send('<script>alert("No puedes borrar tu propia cuenta activa."); window.location.href="/usuarios";</script>');
+        }
+
+        const sql = "DELETE FROM usuarios WHERE id_usuario = ?";
+        await queryAsync(sql, [id]);
+        
+        console.log(`✅ Usuario ID: ${id} eliminado por SuperAdmin`);
+        res.redirect('/usuarios');
+    } catch (error) {
+        console.error('Error al borrar usuario:', error);
+        res.status(500).send('Error al borrar el usuario.');
+    }
+});
 // ==========================================
 // 8. MÓDULO: ASIGNATURAS
 // ==========================================

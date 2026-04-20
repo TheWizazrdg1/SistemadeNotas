@@ -113,10 +113,50 @@
         </div>
 
         <div class="row mb-0">
-            <div class="input-field col s12 m6 offset-m3">
+            <div class="input-field col s12 m4">
                 <i class="material-icons prefix">search</i>
                 <input id="buscador_alumnos" type="text" class="validate">
                 <label for="buscador_alumnos">🔍 Buscar por Nombre, Apellido o RUT</label>
+            </div>
+
+            <div class="input-field col s12 m4">
+                <i class="material-icons prefix">filter_1</i>
+                <select id="filtro_grado">
+                    <option value="" selected>Todos los Cursos</option>
+                    <% 
+                    if (typeof cursos !== 'undefined' && cursos.length > 0) {
+                        const gradosUnicos = [...new Set(cursos.map(c => c.grado))].sort((a,b) => a - b);
+                        gradosUnicos.forEach(g => { 
+                            if(g) {
+                    %>
+                        <option value="<%= g %>°"><%= g %>°</option>
+                    <% 
+                            }
+                        });
+                    }
+                    %>
+                </select>
+                <label>Filtrar por Curso</label>
+            </div>
+
+            <div class="input-field col s12 m4">
+                <i class="material-icons prefix">sort_by_alpha</i>
+                <select id="filtro_letra">
+                    <option value="" selected>Todas las Letras</option>
+                    <% 
+                    if (typeof cursos !== 'undefined' && cursos.length > 0) {
+                        const letrasUnicas = [...new Set(cursos.map(c => c.nombre_curso))].sort();
+                        letrasUnicas.forEach(l => { 
+                            if(l) {
+                    %>
+                        <option value="<%= l %>"><%= l %></option>
+                    <% 
+                            }
+                        });
+                    }
+                    %>
+                </select>
+                <label>Filtrar por Letra</label>
             </div>
         </div>
 
@@ -394,28 +434,55 @@
 
 
             // ==========================================
-            // 4. BUSCADOR EN TIEMPO REAL
+            // 4. BUSCADOR EN TIEMPO REAL Y FILTROS
             // ==========================================
             const inputBusqueda = document.getElementById('buscador_alumnos');
-            if (inputBusqueda) {
-                inputBusqueda.addEventListener('keyup', function () {
-                    const texto = this.value.toLowerCase();
-                    const filas = document.querySelectorAll('table tbody tr');
+            const filtroGrado = document.getElementById('filtro_grado');
+            const filtroLetra = document.getElementById('filtro_letra');
 
-                    filas.forEach(fila => {
-                        if (fila.cells.length === 1) return;
+            function aplicarFiltros() {
+                const texto = inputBusqueda ? inputBusqueda.value.toLowerCase() : '';
+                const gradoSeleccionado = filtroGrado ? filtroGrado.value.toLowerCase() : '';
+                const letraSeleccionada = filtroLetra ? filtroLetra.value.toLowerCase() : '';
+                
+                const filas = document.querySelectorAll('table tbody tr');
 
-                        const rut = fila.cells[0].textContent.toLowerCase();
-                        const nombre = fila.cells[1].textContent.toLowerCase();
-                        const apellido = fila.cells[2].textContent.toLowerCase();
+                filas.forEach(fila => {
+                    if (fila.cells.length === 1) return; // Fila de "No hay alumnos"
 
-                        if (rut.includes(texto) || nombre.includes(texto) || apellido.includes(texto)) {
-                            fila.style.display = '';
-                        } else {
-                            fila.style.display = 'none';
-                        }
-                    });
+                    const rut = fila.cells[0].textContent.toLowerCase();
+                    const nombre = fila.cells[1].textContent.toLowerCase();
+                    const apellido = fila.cells[2].textContent.toLowerCase();
+                    const cursoRaw = fila.cells[4].textContent.trim().toLowerCase(); // ej: "1° a" o "sin asignar"
+
+                    const cumpleTexto = rut.includes(texto) || nombre.includes(texto) || apellido.includes(texto);
+                    
+                    let cumpleGrado = true;
+                    if (gradoSeleccionado !== "") {
+                        cumpleGrado = cursoRaw.startsWith(gradoSeleccionado);
+                    }
+
+                    let cumpleLetra = true;
+                    if (letraSeleccionada !== "") {
+                        cumpleLetra = cursoRaw.endsWith(letraSeleccionada) || cursoRaw.includes("° " + letraSeleccionada);
+                    }
+
+                    if (cumpleTexto && cumpleGrado && cumpleLetra) {
+                        fila.style.display = '';
+                    } else {
+                        fila.style.display = 'none';
+                    }
                 });
+            }
+
+            if (inputBusqueda) {
+                inputBusqueda.addEventListener('keyup', aplicarFiltros);
+            }
+            if (filtroGrado) {
+                filtroGrado.addEventListener('change', aplicarFiltros);
+            }
+            if (filtroLetra) {
+                filtroLetra.addEventListener('change', aplicarFiltros);
             }
         });
 
