@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel SuperAdmin - Libro de Clases</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    
+
     <style>
-        nav { background: linear-gradient( #213c93 100%); }
+        nav {
+            background: linear-gradient(#213c93 100%);
+        }
+
         .admin-card {
             border-radius: 15px;
             padding: 40px 30px;
             margin-top: 50px;
-            border-top: 6px solid #e53935; /* Línea roja superior para destacar seguridad */
+            border-top: 6px solid #e53935;
+            /* Línea roja superior para destacar seguridad */
         }
     </style>
 </head>
+
 <body class="grey lighten-4">
 
     <nav>
@@ -37,7 +43,7 @@
     <div class="container">
         <div class="row">
             <div class="col s12 m8 offset-m2">
-                
+
                 <div class="card admin-card z-depth-2 hoverable">
                     <div class="center-align">
                         <i class="material-icons" style="font-size: 5rem; color: #e53935;">admin_panel_settings</i>
@@ -46,21 +52,23 @@
                     </div>
 
                     <div class="divider" style="margin: 30px 0;"></div>
-                    
+
                     <form action="/cambiar-semestre" method="POST">
                         <div class="row">
                             <div class="input-field col s12">
                                 <i class="material-icons prefix">date_range</i>
                                 <select name="semestre" required>
-                                    <option value="1" <%= semestreActual == 1 ? 'selected' : '' %>>Primer Semestre</option>
-                                    <option value="2" <%= semestreActual == 2 ? 'selected' : '' %>>Segundo Semestre</option>
+                                    <option value="1" <%=semestreActual==1 ? 'selected' : '' %>>Primer Semestre</option>
+                                    <option value="2" <%=semestreActual==2 ? 'selected' : '' %>>Segundo Semestre
+                                    </option>
                                 </select>
                                 <label>Selecciona el Semestre Activo</label>
                             </div>
                         </div>
-                        
+
                         <div class="center-align" style="margin-top: 10px;">
-                            <button class="btn waves-effect waves-light red darken-1 btn-large" type="submit" style="border-radius: 30px; font-weight: bold;">
+                            <button class="btn waves-effect waves-light red darken-1 btn-large" type="submit"
+                                style="border-radius: 30px; font-weight: bold;">
                                 <i class="material-icons left">save</i>Guardar Cambios en el Sistema
                             </button>
                         </div>
@@ -71,7 +79,8 @@
                     <div class="row center-align">
                         <div class="col s12 m6 offset-m3">
                             <a href="/usuarios" style="text-decoration: none;">
-                                <div class="card hoverable" style="border-radius: 15px; padding: 20px; background-color: #f5f5f5; border-left: 5px solid #2196F3;">
+                                <div class="card hoverable"
+                                    style="border-radius: 15px; padding: 20px; background-color: #f5f5f5; border-left: 5px solid #2196F3;">
                                     <i class="material-icons" style="font-size: 3rem; color: #2196F3;">group</i>
                                     <h5 style="color: #333; font-weight: bold;">Gestor de Usuarios</h5>
                                     <p class="grey-text">Administrar cuentas, roles y contraseñas del sistema</p>
@@ -87,11 +96,12 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Inicializar el select de Materialize
             var elems = document.querySelectorAll('select');
             M.FormSelect.init(elems);
         });
     </script>
 </body>
+
 </html>

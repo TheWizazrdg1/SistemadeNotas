@@ -269,7 +269,7 @@ app.get('/notas', verificarSesion, (req, res) => {
 });
 
 app.get('/anotaciones', verificarSesion, (req, res) => {
-    res.render('contenedor_anotaciones', { nombre: req.session.nombre });
+    res.render('contenedor_anotaciones', { nombre: req.session.nombre, rol: req.session.rol });
 });
 
 

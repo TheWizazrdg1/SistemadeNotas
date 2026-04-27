@@ -25,6 +25,11 @@
                     <button class="btn-primary" onclick="window.location.href='/anotaciones'">
                         Anotaciones
                     </button>
+                    <% if (rol === 'admin' || rol === 'superadmin') { %>
+                    <button class="btn-warning" onclick="window.location.href='/contenedor_admin'">
+                        ⚙️ Admin
+                    </button>
+                    <% } %>
                     <button class="btn-logout" onclick="window.location.href='/logout'">
                         Cerrar Sesión
                     </button>
