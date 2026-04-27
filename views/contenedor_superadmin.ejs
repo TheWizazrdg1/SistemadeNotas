@@ -67,7 +67,8 @@
                         </div>
 
                         <div class="center-align" style="margin-top: 10px;">
-                            <button class="btn waves-effect waves-light red darken-1 btn-large" type="submit"
+                            <button class="btn waves-effect waves-light red darken-1 btn-large"
+                                onclick="return confirm('¿Seguro que deseas cambiar el semestre?');" type="submit"
                                 style="border-radius: 30px; font-weight: bold;">
                                 <i class="material-icons left">save</i>Guardar Cambios en el Sistema
                             </button>
@@ -100,6 +101,14 @@
             // Inicializar el select de Materialize
             var elems = document.querySelectorAll('select');
             M.FormSelect.init(elems);
+
+            // Mostrar alerta de guardado si viene de redirección
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('exito') === '1') {
+                M.toast({ html: 'Semestre guardado correctamente', classes: 'green darken-1 rounded', displayLength: 4000 });
+                // Limpiar la URL para no mostrarlo de nuevo al recargar
+                window.history.replaceState(null, null, window.location.pathname);
+            }
         });
     </script>
 </body>

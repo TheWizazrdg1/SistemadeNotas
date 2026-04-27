@@ -490,7 +490,7 @@ app.post('/cambiar-semestre', soloSuperAdmin, async (req, res) => {
         await queryAsync(sql, [semestre]);
 
         console.log(`✅ Semestre cambiado al número: ${semestre} por el SuperAdmin`);
-        res.redirect('/configuracion-global');
+        res.redirect('/configuracion-global?exito=1');
     } catch (error) {
         console.error('Error al actualizar semestre:', error);
         res.status(500).send('No se pudo actualizar el semestre.');

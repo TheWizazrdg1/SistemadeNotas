@@ -1,29 +1,32 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Calificaciones</title>
     <link rel="stylesheet" href="/Styles/calificaciones.css">
-     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
-     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  
-      <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
-      <link rel="stylesheet" href="/Styles/style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css" media="screen,projection" />
+    <link rel="stylesheet" href="/Styles/style.css">
     <!-- Librerías para PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    
-   
-</body>
+
+
+    </body>
+
 </html>
 </head>
+
 <body>
     <div class="container">
-       <header class="header">
+        <header class="header">
             <div class="header-content">
                 <div>
                     <h1>📝 Reporte de calificaciones</h1>
@@ -37,99 +40,96 @@
                     <button class="btn-primary" onclick="window.location.href='/anotaciones'">
                         📊 Anotaciones
                     </button>
-                    <% if (rol === 'admin' || rol === 'superadmin') { %>
-                    <button class="btn-warning" onclick="window.location.href='/contenedor_admin'">
-                        ⚙️ Admin
-                    </button>
-                    <% } %>
-                    <button class="btn-logout" id="btnCerrarSesion">
-                        🚪 Cerrar Sesión
-                    </button>
+                    <% if (rol==='admin' || rol==='superadmin' ) { %>
+                        <button class="btn-warning" onclick="window.location.href='/contenedor_admin'">
+                            ⚙️ Admin
+                        </button>
+                        <% } %>
+                            <button class="btn-logout" id="btnCerrarSesion">
+                                🚪 Cerrar Sesión
+                            </button>
                 </div>
             </div>
         </header>
 
         <div class="content">
             <!-- Panel de Filtros -->
-           <!-- Panel de Filtros -->
+            <!-- Panel de Filtros -->
 
-<!-- Panel de Filtros -->
-<div class="filtros-panel">
-    <!-- Búsqueda por RUT -->
-    <div class="filtro-grupo busqueda-rut-container">
-        <label for="inputBuscarRut">🔍 Buscar por RUT:</label>
-        <div class="input-buscar-rut">
-            <input 
-                type="text" 
-                id="inputBuscarRut" 
-                placeholder="Ej: 12.345.678-9"
-                maxlength="12"
-            >
-            <div id="sugerenciasRut"></div>
-        </div>
-    </div>
-    
-    <!-- NUEVO: Botón de búsqueda -->
-    <button id="btnBuscarRut" class="btn-buscar-rut">
-        🔎 Buscar
-    </button>
-</div>
+            <!-- Panel de Filtros -->
+            <div class="filtros-panel">
+                <!-- Búsqueda por RUT -->
+                <div class="filtro-grupo busqueda-rut-container">
+                    <label for="inputBuscarRut">🔍 Buscar por RUT:</label>
+                    <div class="input-buscar-rut">
+                        <input type="text" id="inputBuscarRut" placeholder="Ej: 12.345.678-9" maxlength="12">
+                        <div id="sugerenciasRut"></div>
+                    </div>
+                </div>
 
-<!-- Resto de filtros en panel separado -->
-<div class="filtros-panel">
-    <div class="filtro-grupo">
-        <label for="filtroCurso">📚 Curso:</label>
-        <select id="filtroCurso">
-            <option value="">Todos los cursos</option>
-        </select>
-    </div>
-    
-    <div class="filtro-grupo">
-        <label for="filtroLetra">📝 Letra:</label>
-        <select id="filtroLetra">
-            <option value="">Todas</option>
-        </select>
-    </div>
-    
-    <div class="filtro-grupo">
-        <label for="filtroAlumno">👤 Alumno:</label>
-        <select id="filtroAlumno">
-            <option value="">Seleccionar alumno...</option>
-        </select>
-    </div>
-    
-    <div class="filtro-grupo">
-        <label for="filtroAsignatura">🔬 Asignatura:</label>
-        <select id="filtroAsignatura">
-            <option value="">Todas las asignaturas</option>
-        </select>
-    </div>
-    
+                <!-- NUEVO: Botón de búsqueda -->
+                <button id="btnBuscarRut" class="btn-buscar-rut">
+                    🔎 Buscar
+                </button>
+            </div>
 
-    
-    
-    <button id="btnLimpiar" class="btn-secondary">🔄 Limpiar</button>
-</div>
+            <!-- Resto de filtros en panel separado -->
+            <div class="filtros-panel">
+                <div class="filtro-grupo">
+                    <label for="filtroCurso">📚 Curso:</label>
+                    <select id="filtroCurso">
+                        <option value="">Todos los cursos</option>
+                    </select>
+                </div>
+
+                <div class="filtro-grupo">
+                    <label for="filtroLetra">📝 Letra:</label>
+                    <select id="filtroLetra">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+
+                <div class="filtro-grupo">
+                    <label for="filtroAlumno">👤 Alumno:</label>
+                    <select id="filtroAlumno">
+                        <option value="">Seleccionar alumno...</option>
+                    </select>
+                </div>
+
+                <div class="filtro-grupo">
+                    <label for="filtroAsignatura">🔬 Asignatura:</label>
+                    <select id="filtroAsignatura">
+                        <option value="">Todas las asignaturas</option>
+                    </select>
+                </div>
+
+
+
+
+                <button id="btnLimpiar" class="btn-secondary">🔄 Limpiar</button>
+            </div>
 
             <!-- Información del Alumno -->
             <!-- Información del Alumno -->
-<div id="infoAlumno" class="info-alumno" style="display: none;">
-    <div class="alumno-card">
-        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 15px;">
-            <div>
-                <h2 id="nombreAlumno"></h2>
-                <div class="alumno-detalles">
-                    <p><strong>RUT:</strong> <span id="rutAlumno"></span></p>
-                    <p><strong>Curso:</strong> <span id="cursoAlumno"></span></p>
-                    <p><strong>Promedio General:</strong> <span id="promedioGeneral" class="promedio-badge">-</span></p>
+            <div id="infoAlumno" class="info-alumno" style="display: none;">
+                <div class="alumno-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h2 id="nombreAlumno"></h2>
+                            <div class="alumno-detalles">
+                                <p><strong>RUT:</strong> <span id="rutAlumno"></span></p>
+                                <p><strong>Curso:</strong> <span id="cursoAlumno"></span></p>
+                                <p><strong>Promedio General:</strong> <span id="promedioGeneral"
+                                        class="promedio-badge">-</span></p>
+                            </div>
+                        </div>
+                        <button id="btnDescargarPDF" class="btn-download">
+                            📥 Descargar PDF
+                        </button>
+                    </div>
                 </div>
             </div>
-            <button id="btnDescargarPDF" class="btn-download">
-                📥 Descargar PDF
-            </button>
-        </div>
-    </div>
-</div>
 
             <!-- Calificaciones por Asignatura -->
             <div id="contenedorCalificaciones" class="calificaciones-container">
@@ -139,8 +139,34 @@
             </div>
         </div>
     </div>
+    <button class="btn-dark-mode btn-dark-mode-float" id="btnToggleDarkMode" title="Toggle Dark Mode">🌙</button>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('btnToggleDarkMode');
+            const body = document.body;
 
-<script src="/Scripts/validador-rut.js"></script>
-<script src="/Scripts/calificaciones.js"></script>
+            if (localStorage.getItem('theme') === 'dark') {
+                body.classList.add('dark-mode');
+                toggleBtn.textContent = '☀️';
+            }
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    body.classList.toggle('dark-mode');
+                    if (body.classList.contains('dark-mode')) {
+                        localStorage.setItem('theme', 'dark');
+                        toggleBtn.textContent = '☀️';
+                    } else {
+                        localStorage.setItem('theme', 'light');
+                        toggleBtn.textContent = '🌙';
+                    }
+                });
+            }
+        });
+    </script>
+    <script src="/Scripts/validador-rut.js"></script>
+    <script src="/Scripts/calificaciones.js"></script>
 </body>
+
 </html>
