@@ -191,7 +191,7 @@ async function cargarCursos() {
         
         // Llenar select del modal de nueva evaluación
         const inputCurso = document.getElementById('inputCurso');
-        inputCurso.innerHTML = '';
+        inputCurso.innerHTML = '<option value="">Seleccionar curso...</option>';
         cursos.forEach(curso => {
             const option = document.createElement('option');
             option.value = curso.id_curso;
@@ -236,6 +236,34 @@ function aplicarFiltros() {
     }
     
     procesarYMostrarDatos(datosFiltrados);
+}
+
+// --- VARIABLES GLOBALES DE ORDENAMIENTO ---
+let sortColumna = localStorage.getItem('notas_sortColumna') || 'nombre';
+let sortDireccion = localStorage.getItem('notas_sortDireccion') || 'asc';
+
+// Hacer setSort globalmente accesible para los onClick del HTML
+window.setSort = function(columna) {
+    if (sortColumna === columna) {
+        sortDireccion = sortDireccion === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortColumna = columna;
+        sortDireccion = 'asc';
+    }
+    localStorage.setItem('notas_sortColumna', sortColumna);
+    localStorage.setItem('notas_sortDireccion', sortDireccion);
+    aplicarFiltros(); // Re-procesa y muestra los datos aplicando el nuevo orden
+};
+
+// Función para guardar el orden manual al arrastrar y soltar
+function guardarOrdenManual() {
+    const filas = Array.from(document.querySelectorAll('#tablaBody tr[draggable="true"]'));
+    const orden = filas.map(tr => tr.dataset.alumnoId);
+    const key = `ordenManual_${filtroCurso.value}_${filtroLetra.value}_${filtroAsignatura.value}`;
+    localStorage.setItem(key, JSON.stringify(orden));
+    
+    sortColumna = 'manual';
+    localStorage.setItem('notas_sortColumna', 'manual');
 }
 
 function procesarYMostrarDatos(datos) {
@@ -315,6 +343,65 @@ function procesarYMostrarDatos(datos) {
             const fechaB = b[0].split('_')[2] || '';
             return new Date(fechaA) - new Date(fechaB);
         });
+
+    // --- APLICAR ORDENAMIENTO A LOS ALUMNOS ---
+    
+    // 1. Pre-calcular promedios para todos
+    listaAlumnos.forEach(alumno => {
+        let sumaNotas = 0;
+        let cantidadNotas = 0;
+        listaNotas.forEach(([keyEvaluacion]) => {
+            if (alumno.notas[keyEvaluacion] && alumno.notas[keyEvaluacion].nota !== null && alumno.notas[keyEvaluacion].nota !== undefined) {
+                sumaNotas += parseFloat(alumno.notas[keyEvaluacion].nota);
+                cantidadNotas++;
+            }
+        });
+        alumno.promedio = cantidadNotas > 0 ? sumaNotas / cantidadNotas : 0;
+    });
+
+    // 2. Ordenar el array de alumnos
+    listaAlumnos.sort((a, b) => {
+        let valA, valB;
+        if (sortColumna === 'manual') {
+            const key = `ordenManual_${filtroCurso.value}_${filtroLetra.value}_${filtroAsignatura.value}`;
+            const ordenStr = localStorage.getItem(key);
+            if (ordenStr) {
+                const orden = JSON.parse(ordenStr);
+                const indexA = orden.indexOf(a.id.toString());
+                const indexB = orden.indexOf(b.id.toString());
+                
+                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                if (indexA !== -1) return -1;
+                if (indexB !== -1) return 1;
+            }
+            // Fallback si no están en el orden manual o no hay orden guardado
+            valA = (a.nombre || '').toLowerCase();
+            valB = (b.nombre || '').toLowerCase();
+            if (valA < valB) return -1;
+            if (valA > valB) return 1;
+            return 0;
+        } else if (sortColumna === 'nombre') {
+            valA = (a.nombre || '').toLowerCase();
+            valB = (b.nombre || '').toLowerCase();
+        } else if (sortColumna === 'rut') {
+            valA = (a.rut || '').toLowerCase();
+            valB = (b.rut || '').toLowerCase();
+        } else if (sortColumna === 'curso') {
+            valA = (a.curso || '').toLowerCase();
+            valB = (b.curso || '').toLowerCase();
+        } else if (sortColumna === 'promedio') {
+            valA = a.promedio;
+            valB = b.promedio;
+        } else {
+            // Asumimos que es una evaluación (keyEvaluacion)
+            valA = (a.notas[sortColumna] && a.notas[sortColumna].nota !== null && a.notas[sortColumna].nota !== undefined) ? parseFloat(a.notas[sortColumna].nota) : -1;
+            valB = (b.notas[sortColumna] && b.notas[sortColumna].nota !== null && b.notas[sortColumna].nota !== undefined) ? parseFloat(b.notas[sortColumna].nota) : -1;
+        }
+        
+        if (valA < valB) return sortDireccion === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDireccion === 'asc' ? 1 : -1;
+        return 0;
+    });
     
     // Actualizar info
     totalAlumnos.textContent = `Total de alumnos: ${listaAlumnos.length} | Evaluaciones: ${listaNotas.length}`;
@@ -327,6 +414,15 @@ function procesarYMostrarDatos(datos) {
 function generarEncabezados(notasArray) {
     const thead = tablaNotas.querySelector('thead tr');
     
+    // Actualizar indicadores fijos
+    const elemRut = document.getElementById('sort-rut');
+    const elemNombre = document.getElementById('sort-nombre');
+    const elemCurso = document.getElementById('sort-curso');
+    
+    if (elemRut) elemRut.textContent = sortColumna === 'rut' ? (sortDireccion === 'asc' ? ' 🔼' : ' 🔽') : '';
+    if (elemNombre) elemNombre.textContent = sortColumna === 'nombre' ? (sortDireccion === 'asc' ? ' 🔼' : ' 🔽') : '';
+    if (elemCurso) elemCurso.textContent = sortColumna === 'curso' ? (sortDireccion === 'asc' ? ' 🔼' : ' 🔽') : '';
+
     // Limpiar columnas dinámicas anteriores
     while (thead.children.length > 3) {
         thead.removeChild(thead.lastChild);
@@ -340,10 +436,11 @@ function generarEncabezados(notasArray) {
         <strong>${infoNota.asignatura}</strong><br>
         <span style="font-size: 0.9em; opacity: 0.9;">${infoNota.evaluacion}</span><br>
         <span style="font-size: 0.75em; color: #ffd54f;">👨‍🏫 ${infoNota.docente}</span>
+        <span class="sort-indicator"></span>
     </div>
 `;
-        th.className = 'eval-col editable-header';
-        th.title = 'Doble clic para editar/eliminar esta evaluación';
+        th.className = 'eval-col editable-header sortable';
+        th.title = 'Clic para ordenar. Doble clic para editar/eliminar esta evaluación';
         th.style.cursor = 'pointer';
         
         // Guardar datos de la evaluación en el elemento
@@ -351,16 +448,38 @@ function generarEncabezados(notasArray) {
         th.dataset.evaluacion = infoNota.evaluacion;
         th.dataset.fecha = keyNota.split('_')[2]; // Fecha del key
         
-        // Evento de doble clic en cabecera
-        th.addEventListener('dblclick', () => abrirModalEditarEvaluacion(th));
+        // Evento de clic en cabecera para ordenar
+        th.addEventListener('click', (e) => {
+            if (e.detail === 1) { // Evitar doble ejecución en dblclick
+                setTimeout(() => {
+                    setSort(keyNota);
+                }, 200);
+            }
+        });
+
+        // Evento de doble clic en cabecera para editar
+        th.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            abrirModalEditarEvaluacion(th);
+        });
         
+        // Actualizar el indicador de ordenamiento
+        if (sortColumna === keyNota) {
+            th.querySelector('.sort-indicator').textContent = sortDireccion === 'asc' ? ' 🔼' : ' 🔽';
+        }
+
         thead.appendChild(th);
     });
     
     // Agregar columna de promedio
     const thPromedio = document.createElement('th');
-    thPromedio.textContent = 'Promedio';
-    thPromedio.className = 'promedio-col';
+    thPromedio.innerHTML = `Promedio <span class="sort-indicator"></span>`;
+    thPromedio.className = 'promedio-col sortable';
+    thPromedio.style.cursor = 'pointer';
+    thPromedio.addEventListener('click', () => setSort('promedio'));
+    if (sortColumna === 'promedio') {
+        thPromedio.querySelector('.sort-indicator').textContent = sortDireccion === 'asc' ? ' 🔼' : ' 🔽';
+    }
     thead.appendChild(thPromedio);
 }
 
@@ -380,6 +499,72 @@ function generarFilas(alumnos, notasArray) {
     
     alumnos.forEach(alumno => {
         const tr = document.createElement('tr');
+        tr.draggable = true;
+        tr.dataset.alumnoId = alumno.id;
+        
+        // --- EVENTOS DRAG AND DROP ---
+        tr.addEventListener('dragstart', (e) => {
+            tr.classList.add('dragging');
+            setTimeout(() => {
+                tr.style.opacity = '0.5';
+            }, 0);
+        });
+
+        tr.addEventListener('dragend', () => {
+            tr.classList.remove('dragging');
+            tr.style.opacity = '1';
+            document.querySelectorAll('#tablaBody tr').forEach(fila => {
+                fila.classList.remove('drag-over-top', 'drag-over-bottom');
+            });
+        });
+
+        tr.addEventListener('dragover', (e) => {
+            e.preventDefault(); 
+            const draggingRow = document.querySelector('.dragging');
+            if (!draggingRow || draggingRow === tr) return;
+
+            const rect = tr.getBoundingClientRect();
+            const offsetY = e.clientY - rect.top;
+            
+            if (offsetY < rect.height / 2) {
+                tr.classList.add('drag-over-top');
+                tr.classList.remove('drag-over-bottom');
+            } else {
+                tr.classList.add('drag-over-bottom');
+                tr.classList.remove('drag-over-top');
+            }
+        });
+
+        tr.addEventListener('dragleave', () => {
+            tr.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+
+        tr.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const draggingRow = document.querySelector('.dragging');
+            if (!draggingRow || draggingRow === tr) return;
+            
+            tr.classList.remove('drag-over-top', 'drag-over-bottom');
+
+            const rect = tr.getBoundingClientRect();
+            const offsetY = e.clientY - rect.top;
+            
+            if (offsetY < rect.height / 2) {
+                tr.parentNode.insertBefore(draggingRow, tr);
+            } else {
+                tr.parentNode.insertBefore(draggingRow, tr.nextSibling);
+            }
+            
+            // Limpiar indicadores de ordenamiento automático si el usuario ordena manual
+            const elemRut = document.getElementById('sort-rut');
+            const elemNombre = document.getElementById('sort-nombre');
+            const elemCurso = document.getElementById('sort-curso');
+            if (elemRut) elemRut.textContent = '';
+            if (elemNombre) elemNombre.textContent = '';
+            if (elemCurso) elemCurso.textContent = '';
+            document.querySelectorAll('.sort-indicator').forEach(ind => ind.textContent = '');
+            guardarOrdenManual();
+        });
         
         // Columnas fijas
         tr.innerHTML = `

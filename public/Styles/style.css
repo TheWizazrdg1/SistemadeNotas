@@ -900,3 +900,27 @@ tbody tr:hover td {
         gap: 10px;
     }
 }
+
+/* =========================================
+   11. DRAG AND DROP
+   ========================================= */
+.dragging {
+    opacity: 0.5;
+    background-color: var(--bg-hover) !important;
+}
+
+.drag-over-top td {
+    border-top: 2px solid var(--primary) !important;
+}
+
+.drag-over-bottom td {
+    border-bottom: 2px solid var(--primary) !important;
+}
+
+tr[draggable="true"] {
+    cursor: grab;
+}
+
+tr[draggable="true"]:active {
+    cursor: grabbing;
+}

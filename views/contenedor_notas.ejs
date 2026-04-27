@@ -25,14 +25,14 @@
                     <button class="btn-primary" onclick="window.location.href='/anotaciones'">
                         Anotaciones
                     </button>
-                    <% if (rol === 'admin' || rol === 'superadmin') { %>
-                    <button class="btn-warning" onclick="window.location.href='/contenedor_admin'">
-                        ⚙️ Admin
-                    </button>
-                    <% } %>
-                    <button class="btn-logout" onclick="window.location.href='/logout'">
-                        Cerrar Sesión
-                    </button>
+                    <% if (rol==='admin' || rol==='superadmin' ) { %>
+                        <button class="btn-warning" onclick="window.location.href='/contenedor_admin'">
+                            ⚙️ Admin
+                        </button>
+                        <% } %>
+                            <button class="btn-logout" onclick="window.location.href='/logout'">
+                                Cerrar Sesión
+                            </button>
                 </div>
             </div>
         </div>
@@ -82,9 +82,12 @@
             <table id="tablaNotas">
                 <thead>
                     <tr>
-                        <th class="sticky-col">RUT</th>
-                        <th class="sticky-col nombre-col">Alumno</th>
-                        <th class="sticky-col">Curso</th>
+                        <th class="sticky-col sortable" onclick="setSort('rut')" style="cursor: pointer;">RUT <span
+                                id="sort-rut"></span></th>
+                        <th class="sticky-col nombre-col sortable" onclick="setSort('nombre')" style="cursor: pointer;">
+                            Alumno <span id="sort-nombre"></span></th>
+                        <th class="sticky-col sortable" onclick="setSort('curso')" style="cursor: pointer;">Curso <span
+                                id="sort-curso"></span></th>
                         <!-- Las columnas de evaluaciones se generarán dinámicamente -->
                     </tr>
                 </thead>
@@ -162,7 +165,7 @@
 
                     <div class="button-group">
                         <button id="btnActualizarEvaluacion" class="btn-primary">💾 Guardar Cambios</button>
-
+                        <button id="btnEliminarEvaluacion" class="btn-danger">🗑️ Eliminar Evaluación</button>
                     </div>
                 </div>
             </div>
