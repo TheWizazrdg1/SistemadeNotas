@@ -22,7 +22,6 @@ const btnCerrarModalEditEval = document.querySelector('.close-edit-eval');
 const btnGuardarNota = document.getElementById('btnGuardarNota');
 const btnCrearEvaluacion = document.getElementById('btnCrearEvaluacion');
 const btnActualizarEvaluacion = document.getElementById('btnActualizarEvaluacion');
-const btnEliminarEvaluacion = document.getElementById('btnEliminarEvaluacion');
 
 let datosCompletosNotas = []; // Guardar todos los datos sin filtrar
 let evaluacionActual = null; // Guardar datos de la evaluación siendo editada
@@ -62,7 +61,8 @@ btnCrearEvaluacion.addEventListener('click', crearNuevaEvaluacion);
 // Modal editar evaluación
 btnCerrarModalEditEval.addEventListener('click', cerrarModalEditarEvaluacion);
 btnActualizarEvaluacion.addEventListener('click', actualizarEvaluacion);
-btnEliminarEvaluacion.addEventListener('click', eliminarEvaluacion);
+const btnEliminarEvaluacion = document.getElementById('btnEliminarEvaluacion');
+if (btnEliminarEvaluacion) btnEliminarEvaluacion.addEventListener('click', eliminarEvaluacion);
 
 // Función principal para cargar datos
 async function cargarDatos() {
