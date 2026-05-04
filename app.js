@@ -297,6 +297,7 @@ app.get('/api/alumnos', verificarSesion, async (req, res) => {
            SELECT a.id_alumno, a.nombres, a.apellido_paterno, a.apellido_materno, a.rut, c.grado, c.nombre_curso
             FROM alumnos a
             LEFT JOIN cursos c ON a.curso_id = c.id_curso
+            WHERE a.estado = 1
             ORDER BY a.apellido_paterno, a.nombres
         `;
         const resultados = await queryAsync(sql);
@@ -565,15 +566,15 @@ app.post('/editar_usuario', soloSuperAdmin, async (req, res) => {
 app.get('/borrar_usuario/:id', soloSuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         // Prevención: no borrar el propio usuario en sesión
         if (req.session.id_usuario && req.session.id_usuario.toString() === id.toString()) {
-             return res.send('<script>alert("No puedes borrar tu propia cuenta activa."); window.location.href="/usuarios";</script>');
+            return res.send('<script>alert("No puedes borrar tu propia cuenta activa."); window.location.href="/usuarios";</script>');
         }
 
         const sql = "DELETE FROM usuarios WHERE id_usuario = ?";
         await queryAsync(sql, [id]);
-        
+
         console.log(`✅ Usuario ID: ${id} eliminado por SuperAdmin`);
         res.redirect('/usuarios');
     } catch (error) {
@@ -1035,7 +1036,7 @@ app.get('/api/anotaciones', async (req, res) => {
             INNER JOIN alumnos a ON an.id_alumno = a.id_alumno
             INNER JOIN docentes d ON an.id_docente = d.id_docente
             LEFT JOIN cursos c ON a.curso_id = c.id_curso
-            WHERE 1=1
+            WHERE 1=1 and a.estado=1
         `;
         const params = [];
         if (id_alumno) { query += ' AND an.id_alumno = ?'; params.push(id_alumno); }
@@ -1062,7 +1063,7 @@ app.get('/api/anotaciones/:id', async (req, res) => {
             INNER JOIN alumnos a ON an.id_alumno = a.id_alumno
             INNER JOIN docentes d ON an.id_docente = d.id_docente
             LEFT JOIN cursos c ON a.curso_id = c.id_curso
-            WHERE an.id_anotacion = ?
+            WHERE an.id_anotacion = ? and a.estado=1
         `;
         const resultados = await queryAsync(query, [id]);
         if (resultados.length === 0) return res.status(404).json({ error: 'Anotación no encontrada' });
@@ -1086,7 +1087,7 @@ app.post('/api/anotaciones', async (req, res) => {
             return res.status(400).json({ error: 'La descripción debe tener al menos 10 caracteres' });
         }
 
-        const alumnoExiste = await queryAsync('SELECT id_alumno FROM alumnos WHERE id_alumno = ?', [id_alumno]);
+        const alumnoExiste = await queryAsync('SELECT id_alumno FROM alumnos WHERE id_alumno = ? and estado=1', [id_alumno]);
         if (alumnoExiste.length === 0) return res.status(404).json({ error: 'Alumno no encontrado' });
 
         const docenteExiste = await queryAsync('SELECT id_docente FROM docentes WHERE id_docente = ?', [id_docente]);
@@ -1149,7 +1150,7 @@ app.get('/api/anotaciones/estadisticas/:id_alumno', async (req, res) => {
                 SUM(CASE WHEN tipo = 'Negativa' THEN 1 ELSE 0 END) as negativas,
                 SUM(CASE WHEN tipo = 'informativa' THEN 1 ELSE 0 END) as informativas 
             FROM anotaciones
-            WHERE id_alumno = ?
+            WHERE id_alumno = ? and estado= 1
         `;
         const resultados = await queryAsync(query, [id_alumno]);
         res.json(resultados[0]);
