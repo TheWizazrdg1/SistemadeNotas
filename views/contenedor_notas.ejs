@@ -82,6 +82,7 @@
             <table id="tablaNotas">
                 <thead>
                     <tr>
+                        <th class="sticky-col" style="width: 40px; text-align: center;">Nº</th>
                         <th class="sticky-col sortable" onclick="setSort('rut')" style="cursor: pointer;">RUT <span
                                 id="sort-rut"></span></th>
                         <th class="sticky-col nombre-col sortable" onclick="setSort('nombre')" style="cursor: pointer;">
@@ -93,7 +94,7 @@
                 </thead>
                 <tbody id="tablaBody">
                     <tr>
-                        <td colspan="3" class="loading">
+                        <td colspan="4" class="loading">
                             <div class="spinner"></div>
                             Cargando datos...
                         </td>
